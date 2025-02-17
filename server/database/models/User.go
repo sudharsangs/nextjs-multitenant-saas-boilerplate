@@ -1,40 +1,21 @@
 package models
 
 import (
-	"os"
+	"time"
 
-	"golang.org/x/crypto/bcrypt"
-
-	jwt "github.com/dgrijalva/jwt-go"
 	"gorm.io/gorm"
 )
 
 // User : User Model
 type User struct {
-	gorm.Model
-	Username     string
-	Email        string
-	PasswordHash string
-	DisplayName  string
-}
-
-var (
-	jwtKey = os.Getenv("JWT_KEY")
-)
-
-// HashPassword : Hash Password
-func (u *User) HashPassword() {
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(u.PasswordHash), bcrypt.DefaultCost)
-	u.PasswordHash = string(bytes)
-}
-
-// GenerateToken : Generate Token
-func (u *User) GenerateToken() (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": u.Username,
-		"email":    u.Email,
-	})
-
-	tokenString, err := token.SignedString([]byte(jwtKey))
-	return tokenString, err
+	ID           uint           `json:"id" gorm:"primaryKey"`
+	Email        string         `json:"email" gorm:"uniqueIndex;not null"`
+	Username     string         `json:"username" gorm:"uniqueIndex;not null"`
+	PasswordHash string         `json:"-" gorm:"not null"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Roles        []Role         `json:"roles" gorm:"many2many:user_roles;"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
 }

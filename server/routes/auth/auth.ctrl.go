@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"orderly-server/database/models"
+	"orderly-server/lib/services"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -18,7 +19,8 @@ func (AuthRouter) Register(c echo.Context) error {
 		Username string `json:"username" validate:"required"`
 		Password string `json:"password" validate:"required"`
 
-		DisplayName string `json:"display_name" validate:"required"`
+		FirstName string `json:"first_name" validate:"required"`
+		LastName  string `json:"last_name" validate:"required"`
 	}
 
 	var body RequestBody
@@ -41,14 +43,12 @@ func (AuthRouter) Register(c echo.Context) error {
 	user := models.User{
 		Username:     body.Username,
 		PasswordHash: body.Password,
-
-		DisplayName: body.DisplayName,
 	}
 
-	user.HashPassword()
+	services.HashPassword(&user)
 	db.Create(&user)
 
-	token, _ := user.GenerateToken()
+	token, _ := services.GenerateToken(&user)
 
 	var cookie http.Cookie
 
@@ -92,7 +92,7 @@ func (AuthRouter) Login(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	token, _ := user.GenerateToken()
+	token, _ := services.GenerateToken(&user)
 
 	var cookie http.Cookie
 

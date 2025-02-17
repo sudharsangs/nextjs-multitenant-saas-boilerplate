@@ -1,0 +1,31 @@
+// Initial RBAC setup SQL
+
+# Default Permissions Insertion
+INSERT INTO permissions (name, resource, action, description) VALUES
+('create_order', 'orders', 'create', 'Create new orders'),
+('read_order', 'orders', 'read', 'View orders'),
+('update_order', 'orders', 'update', 'Update existing orders'),
+('delete_order', 'orders', 'delete', 'Delete orders'),
+('create_customer', 'customers', 'create', 'Create new customers'),
+('read_customer', 'customers', 'read', 'View customers');
+
+
+# Default Roles Insertion
+INSERT INTO roles (name, description) VALUES
+('admin', 'Full system access'),
+('manager', 'Order and customer management'),
+('sales_rep', 'Basic order and customer access');
+
+# Default Role Permissions
+INSERT INTO role_permissions (role_id, permission_id) 
+SELECT 
+    (SELECT id FROM roles WHERE name = 'admin'),
+    id 
+FROM permissions;
+
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT 
+    (SELECT id FROM roles WHERE name = 'manager'),
+    id 
+FROM permissions 
+WHERE action IN ('create', 'read', 'update');
