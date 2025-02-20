@@ -3,6 +3,7 @@ package middlewares
 import (
 	"fmt"
 	"net/http"
+	"orderly-server/lib/services"
 	"os"
 
 	"github.com/dgrijalva/jwt-go"
@@ -13,8 +14,16 @@ var (
 	jwtKey = os.Getenv("JWT_KEY")
 )
 
-// Authoriszed : Check Auth
-func Authoriszed(next echo.HandlerFunc) echo.HandlerFunc {
+type AuthorisedMiddleware struct {
+	authService *services.AuthService
+}
+
+func NewAuthorisedMiddleware(authService *services.AuthService) *AuthorisedMiddleware {
+	return &AuthorisedMiddleware{authService: authService}
+}
+
+// Authorised : Check Auth
+func Authorised(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		cookie, err := c.Cookie("token")
 		if err != nil {
@@ -23,7 +32,7 @@ func Authoriszed(next echo.HandlerFunc) echo.HandlerFunc {
 
 		token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected Signing Method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
 			return jwtKey, nil

@@ -1,4 +1,4 @@
-package auth
+package handlers
 
 import (
 	"net/http"
@@ -13,8 +13,15 @@ import (
 	"gorm.io/gorm"
 )
 
-// Register : Register Router
-func (AuthRouter) Register(c echo.Context) error {
+type AuthHandler struct {
+	authService *services.AuthService
+}
+
+func NewAuthHandler(authService *services.AuthService) *AuthHandler {
+	return &AuthHandler{authService: authService}
+}
+
+func (AuthHandler) Register(c echo.Context) error {
 	type RequestBody struct {
 		Username string `json:"username" validate:"required"`
 		Password string `json:"password" validate:"required"`
@@ -65,7 +72,7 @@ func (AuthRouter) Register(c echo.Context) error {
 }
 
 // Login : Login Router
-func (AuthRouter) Login(c echo.Context) error {
+func (AuthHandler) Login(c echo.Context) error {
 	type RequestBody struct {
 		Username string `json:"username" validate:"required"`
 		Password string `json:"password" validate:"required"`
@@ -109,7 +116,7 @@ func (AuthRouter) Login(c echo.Context) error {
 }
 
 // Logout : Logout Router
-func (AuthRouter) Logout(c echo.Context) error {
+func (AuthHandler) Logout(c echo.Context) error {
 	tokenCookie, _ := c.Get("tokenCookie").(*http.Cookie)
 
 	tokenCookie.Value = ""
