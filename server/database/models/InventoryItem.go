@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type InventoryItem struct {
-	InventoryID uint `gorm:"primaryKey;column:inventory_id"`
+	gorm.Model
 	ProductID   uint `gorm:"not null"`
 	WarehouseID uint `gorm:"not null"`
 	Quantity    int  `gorm:"not null"`
@@ -12,7 +16,6 @@ type InventoryItem struct {
 	Location    string
 	UpdatedBy   uint `gorm:"not null"`
 
-	// Relationships
 	Product   Product   `gorm:"foreignKey:ProductID"`
 	Warehouse Warehouse `gorm:"foreignKey:WarehouseID"`
 }

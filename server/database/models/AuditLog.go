@@ -3,10 +3,12 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type AuditLog struct {
-	AuditID    uint            `gorm:"primaryKey;column:audit_id"`
+	gorm.Model
 	UserID     uint            `gorm:"not null"`
 	Action     string          `gorm:"not null"`
 	EntityType string          `gorm:"not null"`
@@ -16,6 +18,5 @@ type AuditLog struct {
 	Timestamp  time.Time       `gorm:"not null"`
 	IPAddress  string          `gorm:"not null"`
 
-	// Relationships
 	User User `gorm:"foreignKey:UserID"`
 }

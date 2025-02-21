@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Order struct {
-	OrderID       uint      `gorm:"primaryKey;column:order_id"`
+	gorm.Model
 	CustomerID    uint      `gorm:"not null"`
 	AddressID     uint      `gorm:"not null"`
 	UserID        uint      `gorm:"not null"`
@@ -16,12 +20,7 @@ type Order struct {
 	CreatedBy     uint      `gorm:"not null"`
 	UpdatedBy     uint      `gorm:"not null"`
 
-	// Relationships
-	Customer     Customer      `gorm:"foreignKey:CustomerID"`
-	Address      Address       `gorm:"foreignKey:AddressID"`
-	User         User          `gorm:"foreignKey:UserID"`
-	OrderItems   []OrderItem   `gorm:"foreignKey:OrderID"`
-	Invoices     []Invoice     `gorm:"foreignKey:OrderID"`
-	Shipments    []Shipment    `gorm:"foreignKey:OrderID"`
-	ReturnOrders []ReturnOrder `gorm:"foreignKey:OrderID"`
+	Customer Customer `gorm:"foreignKey:CustomerID"`
+	Address  Address  `gorm:"foreignKey:AddressID"`
+	User     User     `gorm:"foreignKey:UserID"`
 }

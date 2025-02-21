@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Invoice struct {
-	InvoiceID     uint      `gorm:"primaryKey;column:invoice_id"`
+	gorm.Model
 	OrderID       uint      `gorm:"not null"`
 	InvoiceNumber string    `gorm:"uniqueIndex;not null"`
 	InvoiceDate   time.Time `gorm:"not null"`
@@ -14,7 +18,5 @@ type Invoice struct {
 	PaymentStatus string    `gorm:"not null"`
 	CreatedBy     uint      `gorm:"not null"`
 
-	// Relationships
-	Order        Order         `gorm:"foreignKey:OrderID"`
-	InvoiceItems []InvoiceItem `gorm:"foreignKey:InvoiceID"`
+	Order Order `gorm:"foreignKey:OrderID"`
 }

@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Shipment struct {
-	ShipmentID     uint `gorm:"primaryKey;column:shipment_id"`
+	gorm.Model
 	OrderID        uint `gorm:"not null"`
 	TrackingNumber string
 	Carrier        string `gorm:"not null"`
@@ -12,6 +16,5 @@ type Shipment struct {
 	ShippingCost   float64 `gorm:"type:decimal(10,2)"`
 	CreatedBy      uint    `gorm:"not null"`
 
-	// Relationships
 	Order Order `gorm:"foreignKey:OrderID"`
 }

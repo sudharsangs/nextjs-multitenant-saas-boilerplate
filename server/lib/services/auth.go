@@ -28,13 +28,6 @@ func (s *AuthService) HasPermission(ctx context.Context, userID uint, resource, 
 		return false
 	}
 
-	for _, role := range user.Roles {
-		for _, perm := range role.Permissions {
-			if perm.Resource == resource && perm.Action == action {
-				return true
-			}
-		}
-	}
 	return false
 }
 

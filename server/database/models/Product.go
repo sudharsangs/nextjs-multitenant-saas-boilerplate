@@ -1,7 +1,9 @@
 package models
 
+import "gorm.io/gorm"
+
 type Product struct {
-	ProductID     uint    `gorm:"primaryKey;column:product_id"`
+	gorm.Model
 	CategoryID    uint    `gorm:"not null"`
 	Name          string  `gorm:"not null"`
 	SKU           string  `gorm:"uniqueIndex;not null"`
@@ -12,9 +14,5 @@ type Product struct {
 	CreatedBy     uint    `gorm:"not null"`
 	UpdatedBy     uint    `gorm:"not null"`
 
-	// Relationships
-	Category       ProductCategory     `gorm:"foreignKey:CategoryID"`
-	InventoryItems []InventoryItem     `gorm:"foreignKey:ProductID"`
-	OrderItems     []OrderItem         `gorm:"foreignKey:ProductID"`
-	POItems        []PurchaseOrderItem `gorm:"foreignKey:ProductID"`
+	Category ProductCategory `gorm:"foreignKey:CategoryID"`
 }

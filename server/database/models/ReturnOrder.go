@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type ReturnOrder struct {
-	ReturnID     uint      `gorm:"primaryKey;column:return_id"`
+	gorm.Model
 	OrderID      uint      `gorm:"not null"`
 	RMANumber    string    `gorm:"uniqueIndex;not null"`
 	Reason       string    `gorm:"not null"`
@@ -12,6 +16,5 @@ type ReturnOrder struct {
 	RefundAmount float64   `gorm:"type:decimal(10,2)"`
 	ApprovedBy   uint      `gorm:"not null"`
 
-	// Relationships
 	Order Order `gorm:"foreignKey:OrderID"`
 }

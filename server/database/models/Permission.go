@@ -7,7 +7,7 @@ import (
 )
 
 type Permission struct {
-	ID          uint           `json:"id" gorm:"primaryKey"`
+	gorm.Model
 	Name        string         `json:"name" gorm:"uniqueIndex;not null"`
 	Resource    string         `json:"resource" gorm:"not null"` // e.g., "orders", "customers"
 	Action      string         `json:"action" gorm:"not null"`   // e.g., "create", "read", "update", "delete"

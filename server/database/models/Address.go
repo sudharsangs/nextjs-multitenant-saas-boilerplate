@@ -1,7 +1,9 @@
 package models
 
+import "gorm.io/gorm"
+
 type Address struct {
-	AddressID  uint   `gorm:"primaryKey;column:address_id"`
+	gorm.Model
 	CustomerID uint   `gorm:"not null"`
 	Street     string `gorm:"not null"`
 	City       string `gorm:"not null"`
@@ -9,8 +11,4 @@ type Address struct {
 	Country    string `gorm:"not null"`
 	PostalCode string `gorm:"not null"`
 	IsDefault  bool   `gorm:"default:false"`
-
-	// Relationships
-	Customer Customer `gorm:"foreignKey:CustomerID"`
-	Orders   []Order  `gorm:"foreignKey:AddressID"`
 }

@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type PurchaseOrder struct {
-	POID             uint      `gorm:"primaryKey;column:po_id"`
+	gorm.Model
 	SupplierID       uint      `gorm:"not null"`
 	OrderDate        time.Time `gorm:"not null"`
 	Status           string    `gorm:"not null"`
@@ -12,7 +16,5 @@ type PurchaseOrder struct {
 	CreatedBy        uint `gorm:"not null"`
 	ApprovedBy       uint `gorm:"not null"`
 
-	// Relationships
-	Supplier           Supplier            `gorm:"foreignKey:SupplierID"`
-	PurchaseOrderItems []PurchaseOrderItem `gorm:"foreignKey:POID"`
+	Supplier Supplier `gorm:"foreignKey:SupplierID"`
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"orderly-server/database"
+	"orderly-server/database/models"
 	"orderly-server/lib"
 	"orderly-server/lib/handlers"
 	"orderly-server/lib/middlewares"
@@ -15,7 +17,14 @@ import (
 
 func main() {
 
-	db := database.Connect()
+	db, err := database.Connect()
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	if err := models.Migrate(db); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 
 	e := echo.New()
 
