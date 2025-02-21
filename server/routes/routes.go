@@ -25,7 +25,6 @@ func SetupRoutes(e *echo.Echo, config RouteConfig) {
 }
 
 func setupPublicRoutes(g *echo.Group, config RouteConfig) {
-	// Auth routes
 	auth := g.Group("/auth")
 	{
 		auth.POST("/login", config.AuthHandler.Login)
@@ -34,11 +33,10 @@ func setupPublicRoutes(g *echo.Group, config RouteConfig) {
 }
 
 func setupProtectedRoutes(g *echo.Group, config RouteConfig) {
-	// User routes
 	users := g.Group("/users")
 	{
-		users.GET("", config.UserHandler.GetUsers, config.RBACMiddleware.RequirePermission("users", "read"))
-		users.POST("/:id/roles", config.UserHandler.AssignRole)
+		users.GET("", config.UserHandler.GetUsers, middlewares.Authorised)
+		users.POST("/:id/roles", config.UserHandler.AssignRole, middlewares.Authorised)
 	}
 
 	auth := g.Group("/auth")
