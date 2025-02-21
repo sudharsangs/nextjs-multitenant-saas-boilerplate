@@ -16,6 +16,15 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
+func (h *UserHandler) GetUsers(c echo.Context) error {
+	users, err := h.userService.GetUsers(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, users)
+}
+
 func (h *UserHandler) AssignRole(c echo.Context) error {
 	var req dto.AssignRoleRequest
 	if err := c.Bind(&req); err != nil {

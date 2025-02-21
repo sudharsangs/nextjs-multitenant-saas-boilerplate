@@ -17,6 +17,14 @@ func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{db: db}
 }
 
+func (s *UserService) GetUsers(ctx context.Context) ([]models.User, error) {
+	var users []models.User
+	if err := s.db.Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func (s *UserService) AssignRole(ctx context.Context, userID, roleID, assignedBy uint) error {
 	// Check if user exists
 	var user models.User
