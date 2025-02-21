@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"orderly-server/lib/dto"
 	"orderly-server/lib/services"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -23,6 +24,20 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, users)
+}
+
+func (h *UserHandler) GetUserByID(c echo.Context) error {
+	userID := c.Param("id")
+	uid, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid user ID"})
+	}
+	user, err := h.userService.GetUserByID(c.Request().Context(), uint(uid))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, user)
 }
 
 func (h *UserHandler) AssignRole(c echo.Context) error {

@@ -25,6 +25,14 @@ func (s *UserService) GetUsers(ctx context.Context) ([]models.User, error) {
 	return users, nil
 }
 
+func (s *UserService) GetUserByID(ctx context.Context, userID uint) (models.User, error) {
+	var user models.User
+	if err := s.db.First(&user, userID).Error; err != nil {
+		return models.User{}, errors.New("user not found")
+	}
+	return user, nil
+}
+
 func (s *UserService) AssignRole(ctx context.Context, userID, roleID, assignedBy uint) error {
 	// Check if user exists
 	var user models.User

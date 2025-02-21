@@ -37,11 +37,10 @@ func setupProtectedRoutes(g *echo.Group, config RouteConfig) {
 	// User routes
 	users := g.Group("/users")
 	{
-		// User roles
-		users.POST("/:id/roles", config.UserHandler.AssignRole, config.RBACMiddleware.RequirePermission("roles", "create"))
+		users.GET("", config.UserHandler.GetUsers, config.RBACMiddleware.RequirePermission("users", "read"))
+		users.POST("/:id/roles", config.UserHandler.AssignRole)
 	}
 
-	// Auth routes that require authentication
 	auth := g.Group("/auth")
 	{
 		auth.POST("/logout", config.AuthHandler.Logout)

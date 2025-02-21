@@ -60,8 +60,13 @@ func GenerateToken(u *models.User) (string, error) {
 }
 
 func GetUserIDFromToken(context echo.Context) (uint, error) {
-	user := context.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
+	user := context.Get("user")
+	if user == nil {
+		return 0, echo.NewHTTPError(401, "missing or invalid JWT token")
+	}
+
+	token := user.(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(float64)
 	return uint(userID), nil
 }
