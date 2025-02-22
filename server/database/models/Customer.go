@@ -10,7 +10,7 @@ type Customer struct {
 	gorm.Model
 	Name        string `gorm:"not null"`
 	Email       string `gorm:"uniqueIndex;not null"`
-	UserID      uint   `gorm:"not null"`
+	CompanyID   uint   `gorm:"not null"`
 	AddressID   uint
 	Phone       string
 	CreditLimit float64   `gorm:"type:decimal(10,2)"`
@@ -20,5 +20,6 @@ type Customer struct {
 	UpdatedBy   uint      `gorm:"not null"`
 
 	Address Address `gorm:"foreignKey:AddressID"`
-	User    User    `gorm:"foreignKey:UserID"`
+	Company User    `gorm:"foreignKey:CompanyID"`
+	User    User    `gorm:"foreignKey:CreatedBy"`
 }

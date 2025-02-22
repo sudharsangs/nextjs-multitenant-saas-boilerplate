@@ -10,7 +10,7 @@ type Order struct {
 	gorm.Model
 	CustomerID    uint      `gorm:"not null"`
 	AddressID     uint      `gorm:"not null"`
-	UserID        uint      `gorm:"not null"`
+	CompanyID     uint      `gorm:"not null"`
 	TotalAmount   float64   `gorm:"type:decimal(10,2);not null"`
 	Status        string    `gorm:"not null"`
 	OrderDate     time.Time `gorm:"not null"`
@@ -22,5 +22,6 @@ type Order struct {
 
 	Customer Customer `gorm:"foreignKey:CustomerID"`
 	Address  Address  `gorm:"foreignKey:AddressID"`
-	User     User     `gorm:"foreignKey:UserID"`
+	User     User     `gorm:"foreignKey:CreatedBy"`
+	Company  Company  `gorm:"foreignKey:CompanyID"`
 }

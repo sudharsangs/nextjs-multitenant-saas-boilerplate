@@ -16,6 +16,8 @@ func Migrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&Address{},
 		&Permission{},
+		&Company{},
+		&CompanyUser{},
 		&Role{},
 		&RolePermission{},
 		&User{},

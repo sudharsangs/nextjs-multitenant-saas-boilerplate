@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"orderly-server/database"
+	"orderly-server/database/models"
 	"orderly-server/lib"
 	"orderly-server/lib/handlers"
 	"orderly-server/lib/middlewares"
@@ -23,9 +24,9 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// if err := models.Migrate(db); err != nil {
-	// 	log.Fatalf("Failed to migrate database: %v", err)
-	// }
+	if err := models.Migrate(db); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(
