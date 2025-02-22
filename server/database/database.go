@@ -22,7 +22,7 @@ func Connect() (*gorm.DB, error) {
 		return nil, fmt.Errorf("missing required database environment variables")
 	}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable schema=public",
 		host, user, password, dbname, port)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{

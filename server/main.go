@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"orderly-server/database"
-	"orderly-server/database/models"
 	"orderly-server/lib"
 	"orderly-server/lib/handlers"
 	"orderly-server/lib/middlewares"
@@ -13,20 +12,28 @@ import (
 	"github.com/go-playground/validator/v10"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
 
 	db, err := database.Connect()
+
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	if err := models.Migrate(db); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
+	// if err := models.Migrate(db); err != nil {
+	// 	log.Fatalf("Failed to migrate database: %v", err)
+	// }
 
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(
+		middleware.CORSConfig{
+			AllowOrigins:     []string{"http://localhost:5173"},
+			AllowCredentials: true,
+		},
+	))
 
 	e.Validator = &lib.CustomValidator{Validator: validator.New()}
 

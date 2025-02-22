@@ -11,6 +11,7 @@ type Customer struct {
 	Name        string `gorm:"not null"`
 	Email       string `gorm:"uniqueIndex;not null"`
 	UserID      uint   `gorm:"not null"`
+	AddressID   uint
 	Phone       string
 	CreditLimit float64   `gorm:"type:decimal(10,2)"`
 	CreatedAt   time.Time `gorm:"not null"`
@@ -18,5 +19,6 @@ type Customer struct {
 	CreatedBy   uint      `gorm:"not null"`
 	UpdatedBy   uint      `gorm:"not null"`
 
-	User User `gorm:"foreignKey:UserID"`
+	Address Address `gorm:"foreignKey:AddressID"`
+	User    User    `gorm:"foreignKey:UserID"`
 }

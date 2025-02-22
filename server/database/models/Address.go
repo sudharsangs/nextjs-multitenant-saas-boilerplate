@@ -4,7 +4,6 @@ import "gorm.io/gorm"
 
 type Address struct {
 	gorm.Model
-	CustomerID uint   `gorm:"not null"`
 	Street     string `gorm:"not null"`
 	City       string `gorm:"not null"`
 	State      string `gorm:"not null"`

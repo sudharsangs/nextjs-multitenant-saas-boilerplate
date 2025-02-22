@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -25,6 +27,8 @@ func (AuthHandler) Register(c echo.Context) error {
 	type RequestBody struct {
 		Username string `json:"username" validate:"required"`
 		Password string `json:"password" validate:"required"`
+		Phone    string `json:"phone"`
+		Email    string `json:"email"`
 
 		FirstName string `json:"first_name" validate:"required"`
 		LastName  string `json:"last_name" validate:"required"`
@@ -50,6 +54,10 @@ func (AuthHandler) Register(c echo.Context) error {
 	user := models.User{
 		Username:     body.Username,
 		PasswordHash: body.Password,
+		Phone:        body.Phone,
+		Email:        body.Email,
+		FirstName:    body.FirstName,
+		LastName:     body.LastName,
 	}
 
 	services.HashPassword(&user)
@@ -84,7 +92,9 @@ func (AuthHandler) Login(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	}
 	if err := c.Validate(&body); err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": "Invalid request body",
+		})
 	}
 
 	db, _ := c.Get("db").(*gorm.DB)
@@ -94,12 +104,16 @@ func (AuthHandler) Login(c echo.Context) error {
 	if err := db.Where("username = ?", body.Username).First(&user).Error; err != nil {
 		return c.NoContent(http.StatusConflict)
 	}
-
+	fmt.Print(bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(body.Password)))
 	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(body.Password)) != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	token, _ := services.GenerateToken(&user)
+	token, err := services.GenerateToken(&user)
+	if err != nil {
+		log.Println(err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
 
 	var cookie http.Cookie
 
