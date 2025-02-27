@@ -18,8 +18,9 @@ type Customer struct {
 	IsActive    bool      `gorm:"default:true"`
 	CreatedBy   uint      `gorm:"not null"`
 	UpdatedBy   uint      `gorm:"not null"`
+	DeletedBy   uint
 
 	Address Address `gorm:"foreignKey:AddressID"`
-	Company User    `gorm:"foreignKey:CompanyID"`
+	Company Company `gorm:"foreignKey:CompanyID"`
 	User    User    `gorm:"foreignKey:CreatedBy"`
 }

@@ -42,10 +42,12 @@ func HashPassword(u *models.User) {
 }
 
 // GenerateToken : Generate Token
-func GenerateToken(u *models.User) (string, error) {
+func GenerateToken(u *models.User, companyUser *models.CompanyUser) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": u.Username,
-		"email":    u.Email,
+		"username":   u.Username,
+		"email":      u.Email,
+		"user_id":    u.ID,
+		"company_id": companyUser.CompanyID,
 	})
 
 	tokenString, err := token.SignedString([]byte(jwtKey))
@@ -62,4 +64,16 @@ func GetUserIDFromToken(context echo.Context) (uint, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["user_id"].(float64)
 	return uint(userID), nil
+}
+
+func GetCompanyIDFromToken(context echo.Context) (uint, error) {
+	user := context.Get("user")
+	if user == nil {
+		return 0, echo.NewHTTPError(401, "missing or invalid JWT token")
+	}
+
+	token := user.(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	companyID := claims["company_id"].(float64)
+	return uint(companyID), nil
 }

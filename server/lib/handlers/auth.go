@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -25,10 +24,11 @@ func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 
 func (AuthHandler) Register(c echo.Context) error {
 	type RequestBody struct {
-		Username string `json:"username" validate:"required"`
-		Password string `json:"password" validate:"required"`
-		Phone    string `json:"phone"`
-		Email    string `json:"email"`
+		Username  string `json:"username" validate:"required"`
+		Password  string `json:"password" validate:"required"`
+		Phone     string `json:"phone"`
+		Email     string `json:"email"`
+		CompanyID uint   `json:"company_id"`
 
 		FirstName string `json:"first_name" validate:"required"`
 		LastName  string `json:"last_name" validate:"required"`
@@ -63,7 +63,12 @@ func (AuthHandler) Register(c echo.Context) error {
 	services.HashPassword(&user)
 	db.Create(&user)
 
-	token, _ := services.GenerateToken(&user)
+	companyUser := models.CompanyUser{
+		UserID:    user.ID,
+		CompanyID: body.CompanyID,
+	}
+
+	token, _ := services.GenerateToken(&user, &companyUser)
 
 	var cookie http.Cookie
 
@@ -100,16 +105,21 @@ func (AuthHandler) Login(c echo.Context) error {
 	db, _ := c.Get("db").(*gorm.DB)
 
 	var user models.User
+	var companyUser models.CompanyUser
 
 	if err := db.Where("username = ?", body.Username).First(&user).Error; err != nil {
 		return c.NoContent(http.StatusConflict)
 	}
-	fmt.Print(bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(body.Password)))
+
+	if err := db.Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
+		return c.NoContent(http.StatusConflict)
+	}
+
 	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(body.Password)) != nil {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	token, err := services.GenerateToken(&user)
+	token, err := services.GenerateToken(&user, &companyUser)
 	if err != nil {
 		log.Println(err)
 		return c.NoContent(http.StatusInternalServerError)

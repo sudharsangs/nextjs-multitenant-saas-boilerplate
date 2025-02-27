@@ -43,4 +43,5 @@ func setupProtectedRoutes(g *echo.Group, config RouteConfig) {
 	{
 		auth.POST("/logout", config.AuthHandler.Logout)
 	}
+
 }
