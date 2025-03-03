@@ -10,7 +10,12 @@
 		Power,
 		Building2,
 		CircleUser,
-		Contact
+		Contact,
+		Menu,
+		SkipBack,
+
+		SkipForward
+
 	} from 'lucide-svelte';
 
 	const navItems = [
@@ -27,14 +32,37 @@
 		{ href: '/dashboard/users', icon: Contact, label: 'Users' },
 		{ href: '/dashboard/profile', icon: CircleUser, label: 'Profile' }
 	];
+
+	let isOpen = true;
+
+	function toggleSidebar() {
+		isOpen = !isOpen;
+	}
 </script>
 
 <div class="flex h-screen">
-	<div class="fixed w-64 bg-gray-800 text-white">
+	<div class="fixed bg-gray-800 text-white transition-all w-64 duration-300" class:closed={!isOpen}>
 		<div class="p-4">
-			<h1 class="text-2xl font-bold">Orderly</h1>
+			{#if isOpen}
+				<h1 class="text-2xl font-bold">Orderly</h1>
+			{:else}
+				<h1 class="text-2xl font-bold">O</h1>
+			{/if}
 		</div>
-		<div class="flex h-[95vh] flex-col justify-between">
+		<button 
+			class="p-4 absolute -right-6 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white rounded-full"
+			on:click={toggleSidebar}
+		>
+			{#if isOpen}
+				<SkipBack />
+			{:else}
+				<SkipForward />
+			{/if}
+		</button>
+		<div
+			class="flex h-[95vh] flex-col justify-between transition-all duration-300"
+			class:closed={!isOpen}
+		>
 			<nav class="mt-5">
 				{#each navItems as { href, icon: Icon, label }}
 					<a
@@ -43,7 +71,9 @@
 						class:bg-primary={page.url.pathname === href}
 					>
 						<Icon />
-						{label}
+						{#if isOpen}
+							{label}
+						{/if}
 					</a>
 				{/each}
 			</nav>
@@ -55,17 +85,28 @@
 						class:bg-primary={page.url.pathname === href}
 					>
 						<Icon />
-						{label}
+						{#if isOpen}
+							{label}
+						{/if}
 					</a>
 				{/each}
-				<button class="mb-10 flex cursor-pointer items-center gap-2 px-4 py-2.5 hover:text-sky-100"
-					><Power />Logout
+				<button class="mb-10 flex cursor-pointer items-center gap-2 px-4 py-2.5 hover:text-sky-100">
+					<Power />
+					{#if isOpen}
+						Logout
+					{/if}
 				</button>
 			</div>
 		</div>
 	</div>
-	<div class="w-64"></div>
+	<div class="w-64" class:closed={!isOpen}></div>
 	<div class="flex-1 bg-gray-100 p-6">
 		<slot></slot>
 	</div>
 </div>
+
+<style>
+	.closed {
+		width: 4rem;
+	}
+</style>
