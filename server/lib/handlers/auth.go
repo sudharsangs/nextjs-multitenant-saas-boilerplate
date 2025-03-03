@@ -112,7 +112,10 @@ func (AuthHandler) Login(c echo.Context) error {
 	}
 
 	if err := db.Where("user_id = ?", user.ID).First(&companyUser).Error; err != nil {
-		return c.NoContent(http.StatusConflict)
+		companyUser = models.CompanyUser{
+			UserID:    user.ID,
+			CompanyID: 0,
+		}
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(body.Password)) != nil {

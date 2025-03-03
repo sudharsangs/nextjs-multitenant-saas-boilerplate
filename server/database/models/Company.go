@@ -13,7 +13,7 @@ type Company struct {
 	GSTIN     string `gorm:"uniqueIndex"`
 	PAN       string `gorm:"uniqueIndex"`
 	IsActive  bool   `gorm:"default:true"`
-	POCID     uint   `gorm:"not null"`
+	POCID     uint
 
 	Address Address `gorm:"foreignKey:AddressID"`
 	POC     User    `gorm:"foreignKey:POCID"`
