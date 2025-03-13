@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"orderly-server/database/models"
-	"orderly-server/lib/services"
+	"github.com/factostack/orderly/server/database/models"
+	"github.com/factostack/orderly/server/lib/services"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -152,4 +152,25 @@ func (AuthHandler) Logout(c echo.Context) error {
 	c.SetCookie(tokenCookie)
 
 	return c.NoContent(200)
+}
+
+// RefreshToken handles token refresh
+func (AuthHandler) RefreshToken(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Refresh token endpoint",
+	})
+}
+
+// ForgotPassword handles password reset requests
+func (AuthHandler) ForgotPassword(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Forgot password endpoint",
+	})
+}
+
+// ResetPassword handles password reset with token
+func (AuthHandler) ResetPassword(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Reset password endpoint",
+	})
 }

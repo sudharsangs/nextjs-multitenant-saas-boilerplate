@@ -2,7 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"orderly-server/lib/services"
+
+	"github.com/factostack/orderly/server/lib/services"
 
 	"github.com/labstack/echo/v4"
 )

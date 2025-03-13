@@ -2,13 +2,14 @@ package main
 
 import (
 	"log"
-	"orderly-server/database"
-	"orderly-server/database/models"
-	"orderly-server/lib"
-	"orderly-server/lib/handlers"
-	"orderly-server/lib/middlewares"
-	"orderly-server/lib/services"
-	"orderly-server/routes"
+
+	"github.com/factostack/orderly/server/database"
+	"github.com/factostack/orderly/server/database/models"
+	"github.com/factostack/orderly/server/lib"
+	"github.com/factostack/orderly/server/lib/handlers"
+	"github.com/factostack/orderly/server/lib/middlewares"
+	"github.com/factostack/orderly/server/lib/services"
+	"github.com/factostack/orderly/server/routes"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/joho/godotenv/autoload"

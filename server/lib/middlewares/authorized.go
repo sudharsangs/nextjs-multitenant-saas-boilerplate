@@ -3,8 +3,9 @@ package middlewares
 import (
 	"fmt"
 	"net/http"
-	"orderly-server/lib/services"
 	"os"
+
+	"github.com/factostack/orderly/server/lib/services"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"

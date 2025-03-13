@@ -1,4 +1,4 @@
-module orderly-server
+module github.com/factostack/orderly/server
 
 go 1.24.0
 

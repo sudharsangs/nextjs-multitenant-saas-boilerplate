@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
+	"time"
 
-	"orderly-server/database/models"
+	"github.com/factostack/orderly/server/database/models"
 
 	"os"
 
@@ -35,23 +36,49 @@ var (
 	jwtKey = os.Getenv("JWT_KEY")
 )
 
-// HashPassword : Hash Password
-func HashPassword(u *models.User) {
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(u.PasswordHash), bcrypt.DefaultCost)
-	u.PasswordHash = string(bytes)
+// HashPassword hashes a user's password
+func HashPassword(user *models.User) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.PasswordHash), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.PasswordHash = string(hashedPassword)
+	return nil
 }
 
-// GenerateToken : Generate Token
-func GenerateToken(u *models.User, companyUser *models.CompanyUser) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username":   u.Username,
-		"email":      u.Email,
-		"user_id":    u.ID,
-		"company_id": companyUser.CompanyID,
-	})
+// GenerateToken generates a JWT token for a user
+func GenerateToken(user *models.User, companyUser *models.CompanyUser) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user_id"] = user.ID
+	claims["company_id"] = companyUser.CompanyID
+	claims["exp"] = time.Now().Add(7 * 24 * time.Hour).Unix()
 
-	tokenString, err := token.SignedString([]byte(jwtKey))
-	return tokenString, err
+	return token.SignedString([]byte("your-secret-key")) // TODO: Move secret key to config
+}
+
+// ValidateToken validates a JWT token
+func (s *AuthService) ValidateToken(tokenString string) (*jwt.Token, error) {
+	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte("your-secret-key"), nil // TODO: Move secret key to config
+	})
+}
+
+// RefreshToken refreshes a user's JWT token
+func (s *AuthService) RefreshToken(user *models.User, companyUser *models.CompanyUser) (string, error) {
+	return GenerateToken(user, companyUser)
+}
+
+// ForgotPassword initiates the password reset process
+func (s *AuthService) ForgotPassword(email string) error {
+	// TODO: Implement password reset token generation and email sending
+	return nil
+}
+
+// ResetPassword resets a user's password using a reset token
+func (s *AuthService) ResetPassword(token, newPassword string) error {
+	// TODO: Implement password reset validation and update
+	return nil
 }
 
 func GetUserIDFromToken(context echo.Context) (uint, error) {

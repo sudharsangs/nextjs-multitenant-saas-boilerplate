@@ -1,6 +1,6 @@
 package handlers
 
-import "orderly-server/lib/services"
+import "github.com/factostack/orderly/server/lib/services"
 
 type TransactionsHandler struct {
 	TransactionsService *services.TransactionsService

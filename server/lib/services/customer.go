@@ -2,7 +2,8 @@ package services
 
 import (
 	"errors"
-	"orderly-server/database/models"
+
+	"github.com/factostack/orderly/server/database/models"
 
 	"gorm.io/gorm"
 )

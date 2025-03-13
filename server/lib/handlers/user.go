@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"net/http"
-	"orderly-server/lib/dto"
-	"orderly-server/lib/services"
 	"strconv"
+
+	"github.com/factostack/orderly/server/lib/dto"
+	"github.com/factostack/orderly/server/lib/services"
 
 	"github.com/labstack/echo/v4"
 )
