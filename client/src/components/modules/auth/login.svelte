@@ -10,6 +10,7 @@
 		event.preventDefault();
 		const response = await loginUser(username, password);
 		if (response.token?.length > 0) {
+			localStorage.setItem('token', response.token);
 			showToast = true;
 			setTimeout(() => {
 				showToast = false;

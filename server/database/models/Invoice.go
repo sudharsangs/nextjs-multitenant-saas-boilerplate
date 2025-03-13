@@ -9,6 +9,7 @@ import (
 type Invoice struct {
 	gorm.Model
 	OrderID       uint      `gorm:"not null"`
+	CompanyID     uint      `gorm:"not null"`
 	InvoiceNumber string    `gorm:"uniqueIndex;not null"`
 	InvoiceDate   time.Time `gorm:"not null"`
 	DueDate       time.Time `gorm:"not null"`
@@ -18,5 +19,7 @@ type Invoice struct {
 	PaymentStatus string    `gorm:"not null"`
 	CreatedBy     uint      `gorm:"not null"`
 
-	Order Order `gorm:"foreignKey:OrderID"`
+	Order   Order         `gorm:"foreignKey:OrderID"`
+	Company Company       `gorm:"foreignKey:CompanyID"`
+	Items   []InvoiceItem `gorm:"foreignKey:InvoiceID"`
 }

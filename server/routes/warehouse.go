@@ -17,5 +17,5 @@ func SetupWarehouseRoutes(e *echo.Group, config RouteConfig) {
 
 	// Warehouse inventory routes
 	warehouses.GET("/:id/inventory", config.WarehouseHandler.GetWarehouseInventory)
-	warehouses.POST("/:id/transfer", config.WarehouseHandler.TransferInventory)
+	warehouses.POST("/:id/transfer", config.WarehouseHandler.TransferWarehouseInventory)
 }

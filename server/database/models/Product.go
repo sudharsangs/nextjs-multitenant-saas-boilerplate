@@ -5,6 +5,7 @@ import "gorm.io/gorm"
 type Product struct {
 	gorm.Model
 	CategoryID    uint    `gorm:"not null"`
+	CompanyID     uint    `gorm:"not null"`
 	Name          string  `gorm:"not null"`
 	SKU           string  `gorm:"uniqueIndex;not null"`
 	BasePrice     float64 `gorm:"type:decimal(10,2);not null"`
@@ -15,4 +16,5 @@ type Product struct {
 	UpdatedBy     uint    `gorm:"not null"`
 
 	Category ProductCategory `gorm:"foreignKey:CategoryID"`
+	Company  Company         `gorm:"foreignKey:CompanyID"`
 }
