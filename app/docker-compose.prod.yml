@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  pulse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_APP_URL=https://pulse.factostack.com
+        - NEXT_PUBLIC_DEPLOYMENT_TYPE=pulse
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/pulse
+      - REDIS_URL=redis://cache:6379
+      - NEXTAUTH_URL=https://pulse.factostack.com
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pulse.rule=Host(`pulse.factostack.com`)"
+      - "traefik.http.routers.pulse.tls=true"
+      - "traefik.http.services.pulse.loadbalancer.server.port=3000"
+
+  ordermatrix:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_APP_URL=https://ordermatrix.factostack.com
+        - NEXT_PUBLIC_DEPLOYMENT_TYPE=ordermatrix
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/pulse
+      - REDIS_URL=redis://cache:6379
+      - NEXTAUTH_URL=https://ordermatrix.factostack.com
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ordermatrix.rule=Host(`ordermatrix.factostack.com`)"
+      - "traefik.http.routers.ordermatrix.tls=true"
+      - "traefik.http.services.ordermatrix.loadbalancer.server.port=3000"
+
+  inventoryaxis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_APP_URL=https://inventoryaxis.factostack.com
+        - NEXT_PUBLIC_DEPLOYMENT_TYPE=inventoryaxis
+    environment:
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/pulse
+      - REDIS_URL=redis://cache:6379
+      - NEXTAUTH_URL=https://inventoryaxis.factostack.com
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.inventoryaxis.rule=Host(`inventoryaxis.factostack.com`)"
+      - "traefik.http.routers.inventoryaxis.tls=true"
+      - "traefik.http.services.inventoryaxis.loadbalancer.server.port=3000"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=pulse
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  cache:
+    image: redis:alpine
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "letsencrypt:/letsencrypt"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  postgres_data:
+  redis_data:
+  letsencrypt: 
