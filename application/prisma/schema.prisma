@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model User {
+  id              String            @id @default(uuid())
+  email           String            @unique
+  passwordHash    String
+  name            String
+  role            String
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  company         Company           @relation(fields: [companyId], references: [id])
+  companyId       String
+  permissions     UserPermission[]
+  orders          Order[]
+  purchaseOrders  PurchaseOrder[]
+
+  @@map("users")
+}
+
+model Company {
+  id                    String          @id @default(uuid())
+  name                  String
+  address               String
+  contactEmail         String
+  phone                String
+  taxId                String
+  settings             Json
+  orderMatrixEnabled   Boolean         @default(false)
+  inventoryAxisEnabled Boolean         @default(false)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  users                User[]
+  locations            Location[]
+  customers            Customer[]
+  suppliers            Supplier[]
+  products             Product[]
+  orders               Order[]
+  purchaseOrders       PurchaseOrder[]
+  subscription         Subscription?
+
+  @@map("companies")
+}
+
+model Location {
+  id                    String                  @id @default(uuid())
+  companyId             String
+  name                  String
+  address               String
+  type                  String
+  isActive              Boolean                 @default(true)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  company               Company                 @relation(fields: [companyId], references: [id])
+  inventory             Inventory[]
+  inventoryTransactions InventoryTransaction[]
+
+  @@map("locations")
+}
+
+model UserPermission {
+  id        String   @id @default(uuid())
+  userId    String
+  module    String
+  permission String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("user_permissions")
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  companyId   String
+  name        String
+  contactPerson String
+  email       String
+  phone       String
+  address     String
+  creditLimit Decimal
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id])
+  orders      Order[]
+
+  @@map("customers")
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  companyId       String
+  customerId      String
+  userId          String
+  orderNumber     String      @unique
+  orderDate       DateTime
+  status          String
+  subtotal        Decimal
+  taxAmount       Decimal
+  shippingCost    Decimal
+  totalAmount     Decimal
+  paymentStatus   String
+  shippingAddress String
+  billingAddress  String
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  company         Company     @relation(fields: [companyId], references: [id])
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
+  orderItems      OrderItem[]
+  invoices        Invoice[]
+  shipments       Shipment[]
+  inventoryTransactions InventoryTransaction[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  orderId     String
+  productId   String
+  quantity    Decimal
+  unitPrice   Decimal
+  totalPrice  Decimal
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  orderId       String
+  invoiceNumber String   @unique
+  invoiceDate   DateTime
+  dueDate       DateTime
+  status        String
+  amount        Decimal
+  amountPaid    Decimal
+  paymentTerms  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  order         Order    @relation(fields: [orderId], references: [id])
+
+  @@map("invoices")
+}
+
+model Shipment {
+  id             String   @id @default(uuid())
+  orderId        String
+  trackingNumber String?
+  carrier        String
+  shipDate       DateTime
+  status         String
+  weight         Decimal
+  shippingMethod String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  order          Order    @relation(fields: [orderId], references: [id])
+
+  @@map("shipments")
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  companyId   String
+  sku         String    @unique
+  name        String
+  description String
+  category    String
+  costPrice   Decimal
+  sellingPrice Decimal
+  unitOfMeasure String
+  weight      Decimal
+  attributes  Json
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  company     Company   @relation(fields: [companyId], references: [id])
+  inventory   Inventory[]
+  orderItems  OrderItem[]
+  poItems     POItem[]
+  inventoryTransactions InventoryTransaction[]
+
+  @@map("products")
+}
+
+model Inventory {
+  id                String   @id @default(uuid())
+  productId         String
+  locationId        String
+  quantityOnHand    Decimal
+  quantityAllocated Decimal
+  quantityAvailable Decimal
+  reorderPoint      Decimal
+  reorderQuantity   Decimal
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  product           Product  @relation(fields: [productId], references: [id])
+  location          Location @relation(fields: [locationId], references: [id])
+
+  @@map("inventory")
+}
+
+model InventoryTransaction {
+  id               String   @id @default(uuid())
+  productId        String
+  locationId       String
+  orderId          String?
+  poId             String?
+  transactionType  String
+  quantity         Decimal
+  referenceNumber  String
+  transactionDate  DateTime
+  notes            String?
+  createdAt        DateTime @default(now())
+  product          Product  @relation(fields: [productId], references: [id])
+  location         Location @relation(fields: [locationId], references: [id])
+  order            Order?   @relation(fields: [orderId], references: [id])
+  purchaseOrder    PurchaseOrder? @relation(fields: [poId], references: [id])
+
+  @@map("inventory_transactions")
+}
+
+model Supplier {
+  id            String   @id @default(uuid())
+  companyId     String
+  name          String
+  contactPerson String
+  email         String
+  phone         String
+  address       String
+  paymentTerms  String
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  company       Company  @relation(fields: [companyId], references: [id])
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id                String    @id @default(uuid())
+  companyId         String
+  supplierId        String
+  userId            String
+  poNumber          String    @unique
+  poDate            DateTime
+  status            String
+  totalAmount       Decimal
+  expectedDelivery  DateTime
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  company           Company   @relation(fields: [companyId], references: [id])
+  supplier          Supplier  @relation(fields: [supplierId], references: [id])
+  user              User      @relation(fields: [userId], references: [id])
+  poItems           POItem[]
+  inventoryTransactions InventoryTransaction[]
+
+  @@map("purchase_orders")
+}
+
+model POItem {
+  id               String   @id @default(uuid())
+  poId             String
+  productId        String
+  quantity         Decimal
+  unitPrice        Decimal
+  totalPrice       Decimal
+  expectedDelivery DateTime
+  status           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  purchaseOrder    PurchaseOrder @relation(fields: [poId], references: [id])
+  product          Product  @relation(fields: [productId], references: [id])
+
+  @@map("po_items")
+}
+
+model FeatureFlag {
+  id            String   @id @default(uuid())
+  featureName   String   @unique
+  isEnabled     Boolean
+  configuration Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("feature_flags")
+}
+
+model Subscription {
+  id              String    @id @default(cuid())
+  companyId       String    @unique
+  company         Company   @relation(fields: [companyId], references: [id])
+  plan            Plan      @default(TRIAL)
+  status          SubscriptionStatus @default(ACTIVE)
+  trialStartDate  DateTime  @default(now())
+  trialEndDate    DateTime
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean @default(false)
+  features        SubscriptionFeature[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model SubscriptionFeature {
+  id              String    @id @default(cuid())
+  subscriptionId  String
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id])
+  feature         Feature
+  enabled         Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([subscriptionId, feature])
+}
+
+enum Plan {
+  TRIAL
+  FREE
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  TRIAL
+}
+
+enum Feature {
+  ORDER_MATRIX
+  INVENTORY_AXIS
+  ADVANCED_REPORTING
+  API_ACCESS
+  MULTI_LOCATION
+  BATCH_TRACKING
+  SERIAL_TRACKING
+} 
