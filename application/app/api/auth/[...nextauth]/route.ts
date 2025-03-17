@@ -1,11 +1,9 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
   },
@@ -28,6 +26,9 @@ export const authOptions: NextAuthOptions = {
           where: {
             email: credentials.email,
           },
+          include: {
+            company: true
+          }
         });
 
         if (!user) {
@@ -48,6 +49,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
+          companyId: user.companyId,
         };
       },
     }),
@@ -60,16 +62,22 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: token.id,
           role: token.role,
+          companyId: token.companyId,
         },
       };
     },
     jwt: ({ token, user }) => {
       if (user) {
-        const u = user as unknown as any;
+        const u = user as unknown as {
+          id: string;
+          role: string;
+          companyId: string;
+        };
         return {
           ...token,
           id: u.id,
           role: u.role,
+          companyId: u.companyId,
         };
       }
       return token;

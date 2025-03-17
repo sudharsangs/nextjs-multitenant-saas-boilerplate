@@ -25,9 +25,6 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 
@@ -41,56 +38,25 @@ interface InventoryPageProps {
 }
 
 export default async function InventoryPage({ searchParams }: InventoryPageProps) {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user?.email || "" },
-    select: { companyId: true }
-  });
-
-  if (!user) return null;
-
-  const page = parseInt(searchParams.page || "1");
-  const limit = parseInt(searchParams.limit || "10");
+  const page = searchParams.page || "1";
+  const limit = searchParams.limit || "10";
   const locationId = searchParams.locationId;
-  const lowStock = searchParams.lowStock === "true";
+  const lowStock = searchParams.lowStock;
 
-  const where = {
-    product: {
-      companyId: user.companyId,
-    },
-    ...(locationId && { locationId }),
-    ...(lowStock && {
-      quantityAvailable: {
-        lte: 10, // Assuming low stock threshold
-      },
-    }),
-  };
+  const response = await fetch(
+    `${process.env.URL}/api/inventory?page=${page}&limit=${limit}${
+      locationId ? `&locationId=${locationId}` : ""
+    }${lowStock ? `&lowStock=${lowStock}` : ""}`,
+    {
+      cache: "no-store",
+    }
+  );
 
-  const [inventory, total, locations] = await Promise.all([
-    prisma.inventory.findMany({
-      where,
-      include: {
-        product: true,
-        location: true,
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: {
-        product: {
-          name: "asc",
-        },
-      },
-    }),
-    prisma.inventory.count({ where }),
-    prisma.location.findMany({
-      where: { companyId: user.companyId },
-      select: { id: true, name: true },
-    }),
-  ]);
+  if (!response.ok) {
+    throw new Error("Failed to fetch inventory");
+  }
 
-  const totalPages = Math.ceil(total / limit);
+  const { inventory, total, locations, totalPages, currentPage } = await response.json();
 
   return (
     <DashboardShell>
@@ -123,7 +89,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All locations</SelectItem>
-                {locations.map((location) => (
+                {locations.map((location: { id: string; name: string }) => (
                   <SelectItem key={location.id} value={location.id}>
                     {location.name}
                   </SelectItem>
@@ -153,7 +119,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
             </TableRow>
           </TableHeader>
           <TableBody>
-            {inventory.map((item) => (
+            {inventory.map((item: any) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">
                   <Link href={`/inventory/${item.id}`} className="hover:underline">
@@ -188,14 +154,14 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
 
       <Pagination>
         <PaginationContent>
-          {page > 1 && (
+          {currentPage > 1 && (
             <PaginationItem>
-              <PaginationPrevious href={`/inventory?page=${page - 1}&limit=${limit}${locationId ? `&locationId=${locationId}` : ''}${lowStock ? '&lowStock=true' : ''}`} />
+              <PaginationPrevious href={`/inventory?page=${currentPage - 1}&limit=${limit}${locationId ? `&locationId=${locationId}` : ''}${lowStock ? '&lowStock=true' : ''}`} />
             </PaginationItem>
           )}
           {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
             const pageNumber = i + 1;
-            const isCurrentPage = pageNumber === page;
+            const isCurrentPage = pageNumber === currentPage;
             
             return (
               <PaginationItem key={pageNumber}>
@@ -208,9 +174,9 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
               </PaginationItem>
             );
           })}
-          {page < totalPages && (
+          {currentPage < totalPages && (
             <PaginationItem>
-              <PaginationNext href={`/inventory?page=${page + 1}&limit=${limit}${locationId ? `&locationId=${locationId}` : ''}${lowStock ? '&lowStock=true' : ''}`} />
+              <PaginationNext href={`/inventory?page=${currentPage + 1}&limit=${limit}${locationId ? `&locationId=${locationId}` : ''}${lowStock ? '&lowStock=true' : ''}`} />
             </PaginationItem>
           )}
         </PaginationContent>

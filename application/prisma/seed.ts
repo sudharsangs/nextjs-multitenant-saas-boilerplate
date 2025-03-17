@@ -1,9 +1,39 @@
-import { PrismaClient } from "@prisma/client";
-import { hash } from "bcryptjs";
-import { addDays } from "@/lib/utils";
-import { Plan, Feature, SubscriptionStatus } from "@/lib/subscription";
+const { PrismaClient } = require("@prisma/client");
+const { hash } = require("bcryptjs");
 
 const prisma = new PrismaClient();
+
+enum Plan {
+  TRIAL = "TRIAL",
+  FREE = "FREE",
+  BASIC = "BASIC",
+  PROFESSIONAL = "PROFESSIONAL",
+  ENTERPRISE = "ENTERPRISE",
+}
+
+enum Feature {
+  ORDER_MATRIX = "ORDER_MATRIX",
+  INVENTORY_AXIS = "INVENTORY_AXIS",
+  ADVANCED_REPORTING = "ADVANCED_REPORTING",
+  API_ACCESS = "API_ACCESS",
+  MULTI_LOCATION = "MULTI_LOCATION",
+  BATCH_TRACKING = "BATCH_TRACKING",
+  SERIAL_TRACKING = "SERIAL_TRACKING",
+}
+
+enum SubscriptionStatus {
+  ACTIVE = "ACTIVE",
+  PAST_DUE = "PAST_DUE",
+  CANCELED = "CANCELED",
+  UNPAID = "UNPAID",
+  TRIAL = "TRIAL",
+}
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
 
 async function main() {
   try {

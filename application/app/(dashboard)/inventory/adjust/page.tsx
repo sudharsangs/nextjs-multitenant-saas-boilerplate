@@ -12,34 +12,18 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import Link from "next/link";
 
 export default async function AdjustInventoryPage() {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user?.email || "" },
-    select: { companyId: true }
+  const response = await fetch(`${process.env.URL}/api/inventory/adjust`, {
+    cache: "no-store",
   });
 
-  if (!user) return null;
+  if (!response.ok) {
+    throw new Error("Failed to fetch inventory adjustment data");
+  }
 
-  const [products, locations] = await Promise.all([
-    prisma.product.findMany({
-      where: { companyId: user.companyId, isActive: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, sku: true }
-    }),
-    prisma.location.findMany({
-      where: { companyId: user.companyId, isActive: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true }
-    })
-  ]);
+  const { products, locations } = await response.json();
 
   return (
     <DashboardShell>
@@ -70,7 +54,7 @@ export default async function AdjustInventoryPage() {
                       <SelectValue placeholder="Select a product" />
                     </SelectTrigger>
                     <SelectContent>
-                      {products.map((product) => (
+                      {products.map((product: { id: string; name: string; sku: string }) => (
                         <SelectItem key={product.id} value={product.id}>
                           {product.name} ({product.sku})
                         </SelectItem>
@@ -85,7 +69,7 @@ export default async function AdjustInventoryPage() {
                       <SelectValue placeholder="Select a location" />
                     </SelectTrigger>
                     <SelectContent>
-                      {locations.map((location) => (
+                      {locations.map((location: { id: string; name: string }) => (
                         <SelectItem key={location.id} value={location.id}>
                           {location.name}
                         </SelectItem>

@@ -1,9 +1,11 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { withFeature } from "@/lib/api-middleware";
 import { prisma } from "@/lib/prisma";
 import { Feature } from "@/lib/subscription";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { z } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const createOrderSchema = z.object({
   customerId: z.string(),
@@ -70,48 +72,35 @@ export async function POST(req: NextRequest) {
   });
 }
 
-export async function GET(req: NextRequest) {
-  return withFeature(req, Feature.ORDER_MATRIX, async (_, companyId) => {
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const status = searchParams.get("status");
-    const customerId = searchParams.get("customerId");
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.companyId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-    const where = {
-      companyId,
-      ...(status && { status }),
-      ...(customerId && { customerId }),
-    };
-
-    const [orders, total] = await Promise.all([
-      prisma.order.findMany({
-        where,
-        include: {
-          customer: true,
-          orderItems: {
-            include: {
-              product: true,
-            },
+    const orders = await prisma.order.findMany({
+      where: { companyId: session.user.companyId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      include: {
+        customer: {
+          select: {
+            name: true,
           },
         },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: {
-          createdAt: "desc",
-        },
-      }),
-      prisma.order.count({ where }),
-    ]);
-
-    return successResponse({
-      orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
       },
     });
-  });
+
+    return NextResponse.json(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 } 

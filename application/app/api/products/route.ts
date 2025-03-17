@@ -1,8 +1,11 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/api-middleware";
 import { prisma } from "@/lib/prisma";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { z } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { Prisma } from "@prisma/client";
 
 const createProductSchema = z.object({
   sku: z.string(),
@@ -53,51 +56,61 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  return withAuth(req, async (_, companyId) => {
-    const { searchParams } = new URL(req.url);
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.companyId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const searchParams = req.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const search = searchParams.get("search");
     const category = searchParams.get("category");
+    const search = searchParams.get("search");
 
-    const where = {
-      companyId,
+    const where: Prisma.ProductWhereInput = {
+      companyId: session.user.companyId,
+      ...(category && { category }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { sku: { contains: search, mode: "insensitive" } },
+          { name: { contains: search } },
+          { sku: { contains: search } },
+          { description: { contains: search } },
         ],
       }),
-      ...(category && { category }),
     };
 
-    const [products, total] = await Promise.all([
+    const [products, total, categories] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: {
-          inventory: {
-            include: {
-              location: true,
-            },
-          },
-        },
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: {
-          name: "asc",
-        },
+        orderBy: { name: "asc" },
       }),
       prisma.product.count({ where }),
+      prisma.product.groupBy({
+        by: ["category"],
+        where: { companyId: session.user.companyId },
+        _count: true,
+        orderBy: { category: "asc" },
+      }),
     ]);
 
-    return successResponse({
+    return NextResponse.json({
       products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      total,
+      categories,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
     });
-  });
+  } catch (error) {
+    console.error("Products error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 } 

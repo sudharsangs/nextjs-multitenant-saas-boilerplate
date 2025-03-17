@@ -1,13 +1,13 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { LoginForm } from "@/components/forms/login-form";
+import { SignupForm } from "@/components/forms/signup-form";
 
 export const metadata: Metadata = {
-  title: "Login - Pulse by Factostack",
-  description: "Login to your Pulse account to manage your business operations efficiently",
+  title: "Sign Up - Pulse by Factostack",
+  description: "Create your Pulse account to start managing your business operations",
 };
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="container relative h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
@@ -30,7 +30,7 @@ export default function LoginPage() {
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              Streamline your business operations with our comprehensive business management solution.
+              Join thousands of businesses using Pulse to streamline their operations and boost productivity.
             </p>
             <p className="text-sm text-muted-foreground">
               Part of the Factostack ecosystem - Empowering businesses with modern solutions
@@ -51,20 +51,20 @@ export default function LoginPage() {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">
-              Welcome back
+              Create an account
             </h1>
             <p className="text-sm text-muted-foreground">
-              Sign in to your Pulse account to access your business dashboard
+              Enter your details below to create your account
             </p>
           </div>
-          <LoginForm />
+          <SignupForm />
           <p className="px-8 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/signup"
+              href="/login"
               className="underline underline-offset-4 hover:text-primary"
             >
-              Sign up
+              Sign in
             </Link>
           </p>
           <p className="px-8 text-center text-sm text-muted-foreground">

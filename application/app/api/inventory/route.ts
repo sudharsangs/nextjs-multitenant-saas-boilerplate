@@ -1,10 +1,13 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { withFeature } from "@/lib/api-middleware";
 import { prisma } from "@/lib/prisma";
 import { Feature } from "@/lib/subscription";
 import { successResponse, errorResponse, notFoundResponse } from "@/lib/api-response";
 import { z } from "zod";
 import { Decimal } from "@prisma/client/runtime/library";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { Prisma } from "@prisma/client";
 
 const adjustInventorySchema = z.object({
   productId: z.string(),
@@ -94,26 +97,34 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  return withFeature(req, Feature.INVENTORY_AXIS, async (_, companyId) => {
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const locationId = searchParams.get('locationId');
-    const lowStock = searchParams.get('lowStock') === 'true';
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.companyId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-    const where = {
+    const searchParams = req.nextUrl.searchParams;
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const locationId = searchParams.get("locationId");
+    const lowStock = searchParams.get("lowStock") === "true";
+
+    const where: Prisma.InventoryWhereInput = {
       product: {
-        companyId,
+        companyId: session.user.companyId,
       },
       ...(locationId && { locationId }),
       ...(lowStock && {
         quantityAvailable: {
-          equals: 0,
+          lte: 10, // Assuming low stock threshold
         },
       }),
     };
 
-    const [inventory, total] = await Promise.all([
+    const [inventory, total, locations] = await Promise.all([
       prisma.inventory.findMany({
         where,
         include: {
@@ -124,21 +135,29 @@ export async function GET(req: NextRequest) {
         take: limit,
         orderBy: {
           product: {
-            name: 'asc',
+            name: "asc",
           },
         },
       }),
       prisma.inventory.count({ where }),
+      prisma.location.findMany({
+        where: { companyId: session.user.companyId },
+        select: { id: true, name: true },
+      }),
     ]);
 
-    return successResponse({
+    return NextResponse.json({
       inventory,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      total,
+      locations,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
     });
-  });
+  } catch (error) {
+    console.error("Inventory error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 } 

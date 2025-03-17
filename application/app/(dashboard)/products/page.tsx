@@ -25,12 +25,8 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
 
 interface ProductsPageProps {
   searchParams: {
@@ -42,50 +38,25 @@ interface ProductsPageProps {
 }
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user?.email || "" },
-    select: { companyId: true }
-  });
-
-  if (!user) return null;
-
-  const page = parseInt(searchParams.page || "1");
-  const limit = parseInt(searchParams.limit || "10");
+  const page = searchParams.page || "1";
+  const limit = searchParams.limit || "10";
   const category = searchParams.category;
   const search = searchParams.search;
 
-  const where: Prisma.ProductWhereInput = {
-    companyId: user.companyId,
-    ...(category && { category }),
-    ...(search && {
-      OR: [
-        { name: { contains: search } },
-        { sku: { contains: search } },
-        { description: { contains: search } },
-      ],
-    }),
-  };
+  const response = await fetch(
+    `${process.env.URL}/api/products?page=${page}&limit=${limit}${
+      category ? `&category=${category}` : ""
+    }${search ? `&search=${search}` : ""}`,
+    {
+      cache: "no-store",
+    }
+  );
 
-  const [products, total, categories] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { name: "asc" },
-    }),
-    prisma.product.count({ where }),
-    prisma.product.groupBy({
-      by: ["category"],
-      where: { companyId: user.companyId },
-      _count: true,
-      orderBy: { category: "asc" },
-    }),
-  ]);
+  if (!response.ok) {
+    throw new Error("Failed to fetch products");
+  }
 
-  const totalPages = Math.ceil(total / limit);
+  const { products, total, categories, totalPages, currentPage } = await response.json();
 
   return (
     <DashboardShell>
@@ -120,7 +91,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All categories</SelectItem>
-                {categories.map((cat) => (
+                {categories.map((cat: { category: string; _count: number }) => (
                   <SelectItem key={cat.category} value={cat.category}>
                     {cat.category} ({cat._count})
                   </SelectItem>
@@ -148,7 +119,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
+            {products.map((product: any) => (
               <TableRow key={product.id}>
                 <TableCell className="font-medium">
                   <Link href={`/products/${product.id}`} className="hover:underline">
@@ -181,14 +152,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
       <Pagination>
         <PaginationContent>
-          {page > 1 && (
+          {currentPage > 1 && (
             <PaginationItem>
-              <PaginationPrevious href={`/products?page=${page - 1}&limit=${limit}${category ? `&category=${category}` : ''}${search ? `&search=${search}` : ''}`} />
+              <PaginationPrevious href={`/products?page=${currentPage - 1}&limit=${limit}${category ? `&category=${category}` : ''}${search ? `&search=${search}` : ''}`} />
             </PaginationItem>
           )}
           {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
             const pageNumber = i + 1;
-            const isCurrentPage = pageNumber === page;
+            const isCurrentPage = pageNumber === currentPage;
             
             return (
               <PaginationItem key={pageNumber}>
@@ -201,9 +172,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               </PaginationItem>
             );
           })}
-          {page < totalPages && (
+          {currentPage < totalPages && (
             <PaginationItem>
-              <PaginationNext href={`/products?page=${page + 1}&limit=${limit}${category ? `&category=${category}` : ''}${search ? `&search=${search}` : ''}`} />
+              <PaginationNext href={`/products?page=${currentPage + 1}&limit=${limit}${category ? `&category=${category}` : ''}${search ? `&search=${search}` : ''}`} />
             </PaginationItem>
           )}
         </PaginationContent>

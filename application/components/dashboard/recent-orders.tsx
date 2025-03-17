@@ -1,71 +1,95 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
 
 interface Order {
   id: string;
-  customer: string;
-  email: string;
-  amount: number;
-  status: "pending" | "processing" | "completed" | "cancelled";
+  orderNumber: string;
+  customer: {
+    name: string;
+  };
+  totalAmount: string;
+  status: string;
+  createdAt: string;
 }
 
-export async function RecentOrders() {
-  const session = await getServerSession(authOptions);
-  if (!session) return null;
+export function RecentOrders() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user?.email || "" },
-    select: { companyId: true }
-  });
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const response = await fetch("/api/orders", {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to fetch orders");
+        }
+        const data = await response.json();
+        setOrders(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load orders");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  if (!user) return null;
+    fetchOrders();
+  }, []);
 
-  const recentOrders = await prisma.order.findMany({
-    where: { companyId: user.companyId },
-    take: 5,
-    orderBy: { createdAt: "desc" },
-    include: { customer: true }
-  });
+  if (loading) {
+    return <div className="text-gray-500">Loading...</div>;
+  }
 
-  const orders: Order[] = recentOrders.map(order => ({
-    id: order.id,
-    customer: order.customer.name,
-    email: order.customer.email,
-    amount: Number(order.totalAmount),
-    status: order.status as "pending" | "processing" | "completed" | "cancelled"
-  }));
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
 
-  if (orders.length === 0) {
-    return (
-      <div className="text-center text-sm text-muted-foreground">
-        No recent orders
-      </div>
-    );
+  if (!orders || orders.length === 0) {
+    return <div className="text-gray-500">No recent orders found</div>;
   }
 
   return (
-    <div className="space-y-8">
-      {orders.map((order) => (
-        <div key={order.id} className="flex items-center">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback>
-              {order.customer
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">{order.customer}</p>
-            <p className="text-sm text-muted-foreground">{order.email}</p>
-          </div>
-          <div className="ml-auto font-medium">
-            +${order.amount.toFixed(2)}
-          </div>
-        </div>
-      ))}
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="text-gray-500">Order</TableHead>
+          <TableHead className="text-gray-500">Customer</TableHead>
+          <TableHead className="text-gray-500">Total</TableHead>
+          <TableHead className="text-gray-500">Status</TableHead>
+          <TableHead className="text-gray-500">Date</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {orders.map((order) => (
+          <TableRow key={order.id}>
+            <TableCell className="font-medium text-gray-900">
+              {order.orderNumber}
+            </TableCell>
+            <TableCell className="text-gray-900">{order.customer.name}</TableCell>
+            <TableCell className="text-gray-900">{order.totalAmount}</TableCell>
+            <TableCell className="text-gray-900">{order.status}</TableCell>
+            <TableCell className="text-gray-900">
+              {format(new Date(order.createdAt), "MMM d, yyyy")}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 } 
