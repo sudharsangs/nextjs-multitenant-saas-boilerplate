@@ -47,7 +47,7 @@ export const companies = pgTable('companies', {
 // Enhanced User Management
 export const users = pgTable('users', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  companyId: text('company_id').notNull(),
+  companyId: text('company_id'),
   name: text('name').notNull(),
   email: text('email').unique().notNull(),
   phone: text('phone'),
@@ -63,12 +63,13 @@ export const users = pgTable('users', {
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
 
 // Enhanced Audit Logs
 export const auditLogs = pgTable('audit_logs', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  companyId: text('company_id').notNull(),
+  companyId: text('company_id'),
   userId: text('user_id').notNull(),
   action: auditActionEnum('action').notNull(),
   entityType: text('entity_type').notNull(),
@@ -313,6 +314,7 @@ export const inventory = pgTable('inventory', {
   companyId: text('company_id').notNull(),
   locationId: text('location_id').notNull(),
   productId: text('product_id').notNull(),
+  batchId: text('batch_id'),
   quantity: integer('quantity').notNull(),
   status: inventoryStatusEnum('status').default('AVAILABLE').notNull(),
   lastCountedAt: timestamp('last_counted_at'),

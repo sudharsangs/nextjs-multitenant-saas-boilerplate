@@ -114,6 +114,8 @@ export async function POST(request: Request) {
     // Create new inventory entry
     const [newInventory] = await db.insert(inventory).values({
       ...inventoryData,
+      expiryDate: inventoryData.expiryDate ? new Date(inventoryData.expiryDate) : null,
+      costPrice: inventoryData.costPrice?.toString(),
       lastMovedAt: new Date(),
       isActive: true,
     }).returning();
@@ -160,6 +162,8 @@ export async function PUT(request: Request) {
     const [updatedInventory] = await db.update(inventory)
       .set({
         ...inventoryData,
+        expiryDate: inventoryData.expiryDate ? new Date(inventoryData.expiryDate) : null,
+        costPrice: inventoryData.costPrice?.toString(),
         lastMovedAt: new Date(),
       })
       .where(eq(inventory.id, inventoryId))
@@ -480,11 +484,11 @@ export async function COUNT(request: Request) {
       );
     }
 
-    const inventory = await db.query.inventory.findFirst({
+    const existingInventoryItem = await db.query.inventory.findFirst({
       where: eq(inventory.id, inventoryId),
     });
 
-    if (!inventory) {
+    if (!existingInventoryItem) {
       return NextResponse.json(
         { error: 'Inventory not found' },
         { status: 404 }
