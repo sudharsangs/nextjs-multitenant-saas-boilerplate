@@ -44,9 +44,11 @@ export async function GET(request: Request) {
     const companyId = searchParams.get('companyId');
 
     if (companyId) {
-      const company = await db.query.companies.findFirst({
-        where: eq(companies.id, companyId),
-      });
+      const [company] = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
 
       if (!company) {
         return NextResponse.json(
@@ -58,9 +60,10 @@ export async function GET(request: Request) {
       return NextResponse.json(company);
     }
 
-    const companiesList = await db.query.companies.findMany({
-      where: eq(companies.isActive, true),
-    });
+    const companiesList = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.isActive, true));
 
     return NextResponse.json(companiesList);
   } catch (err) {
@@ -85,10 +88,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const companyData = companySchema.parse(body);
 
-    const [company] = await db.insert(companies).values({
-      ...companyData,
-      isActive: true,
-    }).returning();
+    const [company] = await db
+      .insert(companies)
+      .values({
+        ...companyData,
+        isActive: true,
+      })
+      .returning();
 
     return NextResponse.json(company);
   } catch (err) {
@@ -129,7 +135,8 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const companyData = companySchema.parse(body);
 
-    const [company] = await db.update(companies)
+    const [company] = await db
+      .update(companies)
       .set(companyData)
       .where(eq(companies.id, companyId))
       .returning();
@@ -170,7 +177,8 @@ export async function DELETE(request: Request) {
       );
     }
 
-    await db.update(companies)
+    await db
+      .update(companies)
       .set({ isActive: false })
       .where(eq(companies.id, companyId));
 
@@ -205,9 +213,11 @@ export async function GET_SUBSCRIPTION(request: Request) {
       );
     }
 
-    const subscription = await db.query.subscriptions.findFirst({
-      where: eq(subscriptions.companyId, companyId),
-    });
+    const [subscription] = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.companyId, companyId))
+      .limit(1);
 
     return NextResponse.json(subscription);
   } catch (err) {
@@ -242,16 +252,19 @@ export async function POST_SUBSCRIPTION(request: Request) {
     const body = await request.json();
     const subscriptionData = subscriptionSchema.parse(body);
 
-    const [subscription] = await db.insert(subscriptions).values({
-      companyId,
-      ...subscriptionData,
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      maxUsers: 5, // Default value
-      maxStorage: 1024, // Default value in MB
-      features: ['basic'], // Default features
-      isActive: true,
-    }).returning();
+    const [subscription] = await db
+      .insert(subscriptions)
+      .values({
+        companyId,
+        ...subscriptionData,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        maxUsers: 5, // Default value
+        maxStorage: 1024, // Default value in MB
+        features: ['basic'], // Default features
+        isActive: true,
+      })
+      .returning();
 
     return NextResponse.json(subscription);
   } catch (err) {
@@ -292,7 +305,8 @@ export async function PUT_SUBSCRIPTION(request: Request) {
     const body = await request.json();
     const subscriptionData = subscriptionSchema.parse(body);
 
-    const [subscription] = await db.update(subscriptions)
+    const [subscription] = await db
+      .update(subscriptions)
       .set(subscriptionData)
       .where(eq(subscriptions.companyId, companyId))
       .returning();
@@ -333,7 +347,8 @@ export async function DELETE_SUBSCRIPTION(request: Request) {
       );
     }
 
-    await db.update(subscriptions)
+    await db
+      .update(subscriptions)
       .set({ isActive: false, status: 'CANCELLED' })
       .where(eq(subscriptions.companyId, companyId));
 
@@ -345,4 +360,4 @@ export async function DELETE_SUBSCRIPTION(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

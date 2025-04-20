@@ -17,7 +17,7 @@ const inventorySchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const token = cookieStore.get('token')?.value;
     if (!token) {
       return NextResponse.json(
@@ -38,32 +38,37 @@ export async function GET(request: Request) {
       );
     }
 
-    const whereClause = and(
+    const whereConditions = [
       eq(inventory.companyId, companyId),
-      eq(inventory.isActive, true),
-      ...(locationId ? [eq(inventory.locationId, locationId)] : []),
-      ...(productId ? [eq(inventory.productId, productId)] : [])
-    );
+      eq(inventory.isActive, true)
+    ];
+    
+    if (locationId) {
+      whereConditions.push(eq(inventory.locationId, locationId));
+    }
+    
+    if (productId) {
+      whereConditions.push(eq(inventory.productId, productId));
+    }
 
-    const inventoryList = await db.query.inventory.findMany({
-      where: whereClause,
-      with: {
-        product: {
-          columns: {
-            id: true,
-            name: true,
-            code: true,
-          },
-        },
-        location: {
-          columns: {
-            id: true,
-            name: true,
-            type: true,
-          },
-        },
-      },
-    });
+    const inventoryList = await db
+      .select({
+        id: inventory.id,
+        companyId: inventory.companyId,
+        locationId: inventory.locationId,
+        productId: inventory.productId,
+        quantity: inventory.quantity,
+        status: inventory.status,
+        costPrice: inventory.costPrice,
+        expiryDate: inventory.expiryDate,
+        lastMovedAt: inventory.lastMovedAt,
+        lastCountedAt: inventory.lastCountedAt,
+        isActive: inventory.isActive,
+        createdAt: inventory.createdAt,
+        updatedAt: inventory.updatedAt
+      })
+      .from(inventory)
+      .where(and(...whereConditions));
 
     return NextResponse.json(inventoryList);
   } catch (err) {
@@ -89,36 +94,42 @@ export async function POST(request: Request) {
     const inventoryData = inventorySchema.parse(body);
 
     // Check if inventory entry already exists
-    const existingInventory = await db.query.inventory.findFirst({
-      where: and(
+    const existingInventory = await db
+      .select()
+      .from(inventory)
+      .where(and(
         eq(inventory.companyId, inventoryData.companyId),
         eq(inventory.locationId, inventoryData.locationId),
         eq(inventory.productId, inventoryData.productId),
         eq(inventory.isActive, true)
-      ),
-    });
+      ))
+      .limit(1);
 
-    if (existingInventory) {
+    if (existingInventory.length > 0) {
       // Update existing inventory
-      const [updatedInventory] = await db.update(inventory)
+      const [updatedInventory] = await db
+        .update(inventory)
         .set({
-          quantity: existingInventory.quantity + inventoryData.quantity,
+          quantity: existingInventory[0].quantity + inventoryData.quantity,
           lastMovedAt: new Date(),
         })
-        .where(eq(inventory.id, existingInventory.id))
+        .where(eq(inventory.id, existingInventory[0].id))
         .returning();
 
       return NextResponse.json(updatedInventory);
     }
 
     // Create new inventory entry
-    const [newInventory] = await db.insert(inventory).values({
-      ...inventoryData,
-      expiryDate: inventoryData.expiryDate ? new Date(inventoryData.expiryDate) : null,
-      costPrice: inventoryData.costPrice?.toString(),
-      lastMovedAt: new Date(),
-      isActive: true,
-    }).returning();
+    const [newInventory] = await db
+      .insert(inventory)
+      .values({
+        ...inventoryData,
+        expiryDate: inventoryData.expiryDate ? new Date(inventoryData.expiryDate) : null,
+        costPrice: inventoryData.costPrice?.toString(),
+        lastMovedAt: new Date(),
+        isActive: true,
+      })
+      .returning();
 
     return NextResponse.json(newInventory);
   } catch (err) {
@@ -159,7 +170,8 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const inventoryData = inventorySchema.parse(body);
 
-    const [updatedInventory] = await db.update(inventory)
+    const [updatedInventory] = await db
+      .update(inventory)
       .set({
         ...inventoryData,
         expiryDate: inventoryData.expiryDate ? new Date(inventoryData.expiryDate) : null,
@@ -205,7 +217,8 @@ export async function DELETE(request: Request) {
       );
     }
 
-    await db.update(inventory)
+    await db
+      .update(inventory)
       .set({ isActive: false })
       .where(eq(inventory.id, inventoryId));
 
@@ -240,14 +253,16 @@ export async function POST_TRANSFER(request: Request) {
     }).parse(body);
 
     // Check if source inventory exists and has sufficient quantity
-    const sourceInventory = await db.query.inventory.findFirst({
-      where: and(
+    const [sourceInventory] = await db
+      .select()
+      .from(inventory)
+      .where(and(
         eq(inventory.companyId, transferData.companyId),
         eq(inventory.locationId, transferData.fromLocationId),
         eq(inventory.productId, transferData.productId),
         eq(inventory.isActive, true)
-      ),
-    });
+      ))
+      .limit(1);
 
     if (!sourceInventory || sourceInventory.quantity < transferData.quantity) {
       return NextResponse.json(
@@ -259,7 +274,8 @@ export async function POST_TRANSFER(request: Request) {
     // Start transaction
     await db.transaction(async (tx) => {
       // Update source inventory
-      await tx.update(inventory)
+      await tx
+        .update(inventory)
         .set({
           quantity: sourceInventory.quantity - transferData.quantity,
           lastMovedAt: new Date(),
@@ -267,18 +283,21 @@ export async function POST_TRANSFER(request: Request) {
         .where(eq(inventory.id, sourceInventory.id));
 
       // Check if destination inventory exists
-      const destInventory = await tx.query.inventory.findFirst({
-        where: and(
+      const [destInventory] = await tx
+        .select()
+        .from(inventory)
+        .where(and(
           eq(inventory.companyId, transferData.companyId),
           eq(inventory.locationId, transferData.toLocationId),
           eq(inventory.productId, transferData.productId),
           eq(inventory.isActive, true)
-        ),
-      });
+        ))
+        .limit(1);
 
       if (destInventory) {
         // Update destination inventory
-        await tx.update(inventory)
+        await tx
+          .update(inventory)
           .set({
             quantity: destInventory.quantity + transferData.quantity,
             lastMovedAt: new Date(),
@@ -286,15 +305,17 @@ export async function POST_TRANSFER(request: Request) {
           .where(eq(inventory.id, destInventory.id));
       } else {
         // Create new destination inventory
-        await tx.insert(inventory).values({
-          companyId: transferData.companyId,
-          locationId: transferData.toLocationId,
-          productId: transferData.productId,
-          quantity: transferData.quantity,
-          status: 'AVAILABLE',
-          lastMovedAt: new Date(),
-          isActive: true,
-        });
+        await tx
+          .insert(inventory)
+          .values({
+            companyId: transferData.companyId,
+            locationId: transferData.toLocationId,
+            productId: transferData.productId,
+            quantity: transferData.quantity,
+            status: 'AVAILABLE',
+            lastMovedAt: new Date(),
+            isActive: true,
+          });
       }
     });
 
@@ -306,6 +327,7 @@ export async function POST_TRANSFER(request: Request) {
         { status: 400 }
       );
     }
+    console.error('Error in POST_TRANSFER inventory:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -334,14 +356,16 @@ export async function POST_ADJUSTMENT(request: Request) {
     }).parse(body);
 
     // Check if inventory exists
-    const existingInventory = await db.query.inventory.findFirst({
-      where: and(
+    const [existingInventory] = await db
+      .select()
+      .from(inventory)
+      .where(and(
         eq(inventory.companyId, adjustmentData.companyId),
         eq(inventory.locationId, adjustmentData.locationId),
         eq(inventory.productId, adjustmentData.productId),
         eq(inventory.isActive, true)
-      ),
-    });
+      ))
+      .limit(1);
 
     if (!existingInventory) {
       return NextResponse.json(
@@ -351,7 +375,8 @@ export async function POST_ADJUSTMENT(request: Request) {
     }
 
     // Update inventory quantity
-    const [updatedInventory] = await db.update(inventory)
+    const [updatedInventory] = await db
+      .update(inventory)
       .set({
         quantity: existingInventory.quantity + adjustmentData.quantity,
         lastMovedAt: new Date(),
@@ -369,6 +394,7 @@ export async function POST_ADJUSTMENT(request: Request) {
         { status: 400 }
       );
     }
+    console.error('Error in POST_ADJUSTMENT inventory:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -395,14 +421,16 @@ export async function TRANSFER(request: Request) {
       quantity: z.number(),
     }).parse(body);
 
-    const sourceInventory = await db.query.inventory.findFirst({
-      where: and(
+    const [sourceInventory] = await db
+      .select()
+      .from(inventory)
+      .where(and(
         eq(inventory.companyId, transferData.companyId),
         eq(inventory.locationId, transferData.fromLocationId),
         eq(inventory.productId, transferData.productId),
         eq(inventory.isActive, true)
-      ),
-    });
+      ))
+      .limit(1);
 
     if (!sourceInventory || sourceInventory.quantity < transferData.quantity) {
       return NextResponse.json(
@@ -412,7 +440,8 @@ export async function TRANSFER(request: Request) {
     }
 
     // Update source inventory
-    await db.update(inventory)
+    await db
+      .update(inventory)
       .set({
         quantity: sourceInventory.quantity - transferData.quantity,
         lastMovedAt: new Date(),
@@ -420,32 +449,37 @@ export async function TRANSFER(request: Request) {
       .where(eq(inventory.id, sourceInventory.id));
 
     // Update or create destination inventory
-    const destinationInventory = await db.query.inventory.findFirst({
-      where: and(
+    const [destinationInventory] = await db
+      .select()
+      .from(inventory)
+      .where(and(
         eq(inventory.companyId, transferData.companyId),
         eq(inventory.locationId, transferData.toLocationId),
         eq(inventory.productId, transferData.productId),
         eq(inventory.isActive, true)
-      ),
-    });
+      ))
+      .limit(1);
 
     if (destinationInventory) {
-      await db.update(inventory)
+      await db
+        .update(inventory)
         .set({
           quantity: destinationInventory.quantity + transferData.quantity,
           lastMovedAt: new Date(),
         })
         .where(eq(inventory.id, destinationInventory.id));
     } else {
-      await db.insert(inventory).values({
-        companyId: transferData.companyId,
-        locationId: transferData.toLocationId,
-        productId: transferData.productId,
-        quantity: transferData.quantity,
-        status: 'AVAILABLE',
-        lastMovedAt: new Date(),
-        isActive: true,
-      });
+      await db
+        .insert(inventory)
+        .values({
+          companyId: transferData.companyId,
+          locationId: transferData.toLocationId,
+          productId: transferData.productId,
+          quantity: transferData.quantity,
+          status: 'AVAILABLE',
+          lastMovedAt: new Date(),
+          isActive: true,
+        });
     }
 
     return NextResponse.json({ message: 'Inventory transferred successfully' });
@@ -484,9 +518,11 @@ export async function COUNT(request: Request) {
       );
     }
 
-    const existingInventoryItem = await db.query.inventory.findFirst({
-      where: eq(inventory.id, inventoryId),
-    });
+    const [existingInventoryItem] = await db
+      .select()
+      .from(inventory)
+      .where(eq(inventory.id, inventoryId))
+      .limit(1);
 
     if (!existingInventoryItem) {
       return NextResponse.json(
@@ -500,7 +536,8 @@ export async function COUNT(request: Request) {
       quantity: z.number(),
     }).parse(body);
 
-    const [updatedInventory] = await db.update(inventory)
+    const [updatedInventory] = await db
+      .update(inventory)
       .set({
         quantity: countData.quantity,
         lastCountedAt: new Date(),
@@ -522,4 +559,4 @@ export async function COUNT(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
