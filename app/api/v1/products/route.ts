@@ -2,18 +2,22 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { products, categories } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { getToken } from '@/lib/cookies';
+import { getAuthUser } from '@/lib/auth';
+import type { NextRequest } from 'next/server';
 
 const productSchema = z.object({
-  companyId: z.string(),
-  name: z.string(),
-  code: z.string(),
-  categoryId: z.string(),
-  unit: z.enum(['PIECE', 'KG', 'LITER', 'METER', 'SQUARE_METER', 'CUBIC_METER']),
+  name: z.string().min(2),
+  code: z.string().min(2),
   description: z.string().optional(),
+  categoryId: z.string().optional(),
   hsnCode: z.string().optional(),
-  gstRate: z.number().optional(),
+  unit: z.enum(['PIECE', 'KG', 'LITER', 'METER', 'SQUARE_METER', 'CUBIC_METER']).default('PIECE'),
+  reorderPoint: z.number().optional(),
+  safetyStock: z.number().optional(),
+  leadTime: z.number().optional(),
+  shelfLife: z.number().optional(),
 });
 
 const categorySchema = z.object({
@@ -23,32 +27,29 @@ const categorySchema = z.object({
   parentId: z.string().optional(),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    const { companyId } = getAuthUser(request);
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const categoryId = searchParams.get('categoryId');
 
-    if (!companyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required' },
-        { status: 400 }
+    const query = db
+      .select()
+      .from(products)
+      .where(
+        categoryId 
+          ? and(
+              eq(products.companyId, companyId),
+              eq(products.isActive, true),
+              eq(products.categoryId, categoryId)
+            )
+          : and(
+              eq(products.companyId, companyId),
+              eq(products.isActive, true)
+            )
       );
-    }
 
-    const productsList = await db.query.products.findMany({
-      where: eq(products.companyId, companyId),
-      with: {
-        category: true,
-      },
-    });
+    const productsList = await query;
 
     return NextResponse.json(productsList);
   } catch (err) {
@@ -60,20 +61,37 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    const { companyId } = getAuthUser(request);
     const body = await request.json();
     const productData = productSchema.parse(body);
 
-    const [product] = await db.insert(products).values(productData).returning();
+    // Check if product code already exists for the company
+    const [existingProduct] = await db
+      .select()
+      .from(products)
+      .where(and(
+        eq(products.code, productData.code),
+        eq(products.companyId, companyId)
+      ))
+      .limit(1);
+
+    if (existingProduct) {
+      return NextResponse.json(
+        { error: 'Product code already exists' },
+        { status: 400 }
+      );
+    }
+
+    const [product] = await db
+      .insert(products)
+      .values({
+        ...productData,
+        companyId,
+        isActive: true,
+      })
+      .returning();
 
     return NextResponse.json(product);
   } catch (err) {
@@ -189,9 +207,10 @@ export async function GET_CATEGORIES(request: Request) {
       );
     }
 
-    const categoriesList = await db.query.categories.findMany({
-      where: eq(categories.companyId, companyId),
-    });
+    const categoriesList = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.companyId, companyId));
 
     return NextResponse.json(categoriesList);
   } catch (err) {
@@ -309,4 +328,4 @@ export async function DELETE_CATEGORY(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

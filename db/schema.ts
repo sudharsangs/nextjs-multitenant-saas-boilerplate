@@ -685,3 +685,22 @@ export const invoiceItemRelations = relations(invoiceItems, ({ one }) => ({
     references: [products.id],
   }),
 }));
+
+export const taxRates = pgTable('tax_rates', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  companyId: text('company_id').notNull(),
+  hsnCode: text('hsn_code').notNull(),
+  type: taxTypeEnum('type').notNull(),
+  rate: decimal('rate', { precision: 5, scale: 2 }).notNull(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const taxRateRelations = relations(taxRates, ({ one }) => ({
+  company: one(companies, {
+    fields: [taxRates.companyId],
+    references: [companies.id],
+  }),
+}));

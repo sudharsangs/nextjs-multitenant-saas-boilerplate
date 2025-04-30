@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { companies, subscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { verifyJwt } from '@/lib/jwt';
-import { getToken } from '@/lib/cookies';
+import { getAuthUser } from '@/lib/auth';
+import type { NextRequest } from 'next/server';
 
 const companySchema = z.object({
   name: z.string().min(2),
@@ -29,25 +29,17 @@ const subscriptionSchema = z.object({
   isAutoRenew: z.boolean(),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    await verifyJwt(token);
+    getAuthUser(request); // Just verify authentication
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const requestedCompanyId = searchParams.get('companyId');
 
-    if (companyId) {
+    if (requestedCompanyId) {
       const [company] = await db
         .select()
         .from(companies)
-        .where(eq(companies.id, companyId))
+        .where(eq(companies.id, requestedCompanyId))
         .limit(1);
 
       if (!company) {
@@ -75,16 +67,9 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    getAuthUser(request); // Just verify authentication
     const body = await request.json();
     const companyData = companySchema.parse(body);
 
@@ -112,20 +97,13 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    getAuthUser(request); // Just verify authentication
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const requestedCompanyId = searchParams.get('companyId');
 
-    if (!companyId) {
+    if (!requestedCompanyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
         { status: 400 }
@@ -138,7 +116,7 @@ export async function PUT(request: Request) {
     const [company] = await db
       .update(companies)
       .set(companyData)
-      .where(eq(companies.id, companyId))
+      .where(eq(companies.id, requestedCompanyId))
       .returning();
 
     return NextResponse.json(company);
@@ -157,20 +135,13 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    getAuthUser(request); // Just verify authentication
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const requestedCompanyId = searchParams.get('companyId');
 
-    if (!companyId) {
+    if (!requestedCompanyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
         { status: 400 }
@@ -180,7 +151,7 @@ export async function DELETE(request: Request) {
     await db
       .update(companies)
       .set({ isActive: false })
-      .where(eq(companies.id, companyId));
+      .where(eq(companies.id, requestedCompanyId));
 
     return NextResponse.json({ message: 'Company deleted successfully' });
   } catch (err) {
@@ -193,20 +164,13 @@ export async function DELETE(request: Request) {
 }
 
 // Subscription Management
-export async function GET_SUBSCRIPTION(request: Request) {
+export async function GET_SUBSCRIPTION(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    getAuthUser(request); // Just verify authentication
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const requestedCompanyId = searchParams.get('companyId');
 
-    if (!companyId) {
+    if (!requestedCompanyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
         { status: 400 }
@@ -216,7 +180,7 @@ export async function GET_SUBSCRIPTION(request: Request) {
     const [subscription] = await db
       .select()
       .from(subscriptions)
-      .where(eq(subscriptions.companyId, companyId))
+      .where(eq(subscriptions.companyId, requestedCompanyId))
       .limit(1);
 
     return NextResponse.json(subscription);
@@ -229,20 +193,13 @@ export async function GET_SUBSCRIPTION(request: Request) {
   }
 }
 
-export async function POST_SUBSCRIPTION(request: Request) {
+export async function POST_SUBSCRIPTION(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    getAuthUser(request); // Just verify authentication
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const requestedCompanyId = searchParams.get('companyId');
 
-    if (!companyId) {
+    if (!requestedCompanyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
         { status: 400 }
@@ -255,7 +212,7 @@ export async function POST_SUBSCRIPTION(request: Request) {
     const [subscription] = await db
       .insert(subscriptions)
       .values({
-        companyId,
+        companyId: requestedCompanyId,
         ...subscriptionData,
         startDate: new Date(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
@@ -282,20 +239,13 @@ export async function POST_SUBSCRIPTION(request: Request) {
   }
 }
 
-export async function PUT_SUBSCRIPTION(request: Request) {
+export async function PUT_SUBSCRIPTION(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    getAuthUser(request); // Just verify authentication
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const requestedCompanyId = searchParams.get('companyId');
 
-    if (!companyId) {
+    if (!requestedCompanyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
         { status: 400 }
@@ -308,7 +258,7 @@ export async function PUT_SUBSCRIPTION(request: Request) {
     const [subscription] = await db
       .update(subscriptions)
       .set(subscriptionData)
-      .where(eq(subscriptions.companyId, companyId))
+      .where(eq(subscriptions.companyId, requestedCompanyId))
       .returning();
 
     return NextResponse.json(subscription);
@@ -327,20 +277,13 @@ export async function PUT_SUBSCRIPTION(request: Request) {
   }
 }
 
-export async function DELETE_SUBSCRIPTION(request: Request) {
+export async function DELETE_SUBSCRIPTION(request: NextRequest) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+    getAuthUser(request); // Just verify authentication
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const requestedCompanyId = searchParams.get('companyId');
 
-    if (!companyId) {
+    if (!requestedCompanyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
         { status: 400 }
@@ -349,10 +292,10 @@ export async function DELETE_SUBSCRIPTION(request: Request) {
 
     await db
       .update(subscriptions)
-      .set({ isActive: false, status: 'CANCELLED' })
-      .where(eq(subscriptions.companyId, companyId));
+      .set({ isActive: false })
+      .where(eq(subscriptions.companyId, requestedCompanyId));
 
-    return NextResponse.json({ message: 'Subscription cancelled successfully' });
+    return NextResponse.json({ message: 'Subscription deleted successfully' });
   } catch (err) {
     console.error('Error in DELETE subscription:', err);
     return NextResponse.json(

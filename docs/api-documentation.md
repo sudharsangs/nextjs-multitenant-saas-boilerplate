@@ -19,83 +19,83 @@
 ### Auth APIs
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/auth/login` | POST | User login with email and password |
-| `/api/auth/register` | POST | Register new user |
-| `/api/auth/refresh-token` | POST | Refresh authentication token |
-| `/api/auth/logout` | POST | Logout user |
-| `/api/auth/me` | GET | Get current user details |
+| `/api/v1/auth/login` | POST | User login with email and password |
+| `/api/v1/auth/register` | POST | Register new user |
+| `/api/v1/auth/refresh-token` | POST | Refresh authentication token |
+| `/api/v1/auth/logout` | POST | Logout user |
+| `/api/v1/auth/me` | GET | Get current user details |
 
 ### User Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/users` | GET | List all users |
-| `/api/users` | POST | Create new user |
-| `/api/users/:id` | GET | Get user details |
-| `/api/users/:id` | PUT | Update user details |
-| `/api/users/:id` | DELETE | Delete user |
+| `/api/v1/users` | GET | List all users |
+| `/api/v1/users` | POST | Create new user |
+| `/api/v1/users/:id` | GET | Get user details |
+| `/api/v1/users/:id` | PUT | Update user details |
+| `/api/v1/users/:id` | DELETE | Delete user |
 
 ### Role Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/roles` | GET | List all roles |
-| `/api/roles` | POST | Create new role |
-| `/api/roles/:id` | GET | Get role details |
-| `/api/roles/:id` | PUT | Update role details |
-| `/api/roles/:id` | DELETE | Delete role |
+| `/api/v1/roles` | GET | List all roles |
+| `/api/v1/roles` | POST | Create new role |
+| `/api/v1/roles/:id` | GET | Get role details |
+| `/api/v1/roles/:id` | PUT | Update role details |
+| `/api/v1/roles/:id` | DELETE | Delete role |
 
 ### Department Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/departments` | GET | List all departments |
-| `/api/departments` | POST | Create new department |
-| `/api/departments/:id` | GET | Get department details |
-| `/api/departments/:id` | PUT | Update department details |
-| `/api/departments/:id` | DELETE | Delete department |
+| `/api/v1/departments` | GET | List all departments |
+| `/api/v1/departments` | POST | Create new department |
+| `/api/v1/departments/:id` | GET | Get department details |
+| `/api/v1/departments/:id` | PUT | Update department details |
+| `/api/v1/departments/:id` | DELETE | Delete department |
 
 
 ### Company Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/companies` | GET | List all companies |
-| `/api/companies` | POST | Create new company |
-| `/api/companies/:id` | GET | Get company details |
-| `/api/companies/:id` | PUT | Update company details |
-| `/api/companies/:id` | DELETE | Delete company |
-| `/api/companies/:id/gst-details` | GET | Get company GST details |
-| `/api/companies/:id/statutory-details` | GET | Get company statutory details |
+| `/api/v1/companies` | GET | List all companies |
+| `/api/v1/companies` | POST | Create new company |
+| `/api/v1/companies/:id` | GET | Get company details |
+| `/api/v1/companies/:id` | PUT | Update company details |
+| `/api/v1/companies/:id` | DELETE | Delete company |
+| `/api/v1/companies/:id/gst-details` | GET | Get company GST details |
+| `/api/v1/companies/:id/statutory-details` | GET | Get company statutory details |
 
 ## Subscription Management
 
 ### Subscription Plans
-- `GET /api/subscriptions/plans`
+- `GET /api/v1/subscriptions/plans`
   - List available subscription plans
   - Response includes plan features and pricing
 
 ### Company Subscriptions
-- `GET /api/companies/:companyId/subscription`
+- `GET /api/v1/companies/:companyId/subscription`
   - Get current subscription details
   - Includes plan, status, usage limits
 
-- `POST /api/companies/:companyId/subscription`
+- `POST /api/v1/companies/:companyId/subscription`
   - Create new subscription
   - Required fields: plan, startDate
   - Optional: trialEndDate
 
-- `PUT /api/companies/:companyId/subscription`
+- `PUT /api/v1/companies/:companyId/subscription`
   - Update subscription plan
   - Change plan, extend duration
   - Upgrade/downgrade features
 
-- `DELETE /api/companies/:companyId/subscription`
+- `DELETE /api/v1/companies/:companyId/subscription`
   - Cancel subscription
   - Set end date
 
 ### Usage Tracking
-- `GET /api/companies/:companyId/usage`
+- `GET /api/v1/companies/:companyId/usage`
   - Get current usage metrics
   - Users, storage, features
 
-- `GET /api/companies/:companyId/billing`
+- `GET /api/v1/companies/:companyId/billing`
   - Get billing history
   - Invoices, payments
 
@@ -104,199 +104,199 @@
 ### Product Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/products` | GET | List all products |
-| `/api/products` | POST | Create new product |
-| `/api/products/:id` | GET | Get product details |
-| `/api/products/:id` | PUT | Update product details |
-| `/api/products/:id` | DELETE | Delete product |
-| `/api/products/:id/variants` | GET | Get product variants |
-| `/api/products/:id/inventory` | GET | Get product inventory |
-| `/api/products/:id/bom` | GET | Get product BOM |
+| `/api/v1/products` | GET | List all products |
+| `/api/v1/products` | POST | Create new product |
+| `/api/v1/products/:id` | GET | Get product details |
+| `/api/v1/products/:id` | PUT | Update product details |
+| `/api/v1/products/:id` | DELETE | Delete product |
+| `/api/v1/products/:id/variants` | GET | Get product variants |
+| `/api/v1/products/:id/inventory` | GET | Get product inventory |
+| `/api/v1/products/:id/bom` | GET | Get product BOM |
 
 ### Category Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/categories` | GET | List all categories |
-| `/api/categories` | POST | Create new category |
-| `/api/categories/:id` | GET | Get category details |
-| `/api/categories/:id` | PUT | Update category details |
-| `/api/categories/:id` | DELETE | Delete category |
+| `/api/v1/categories` | GET | List all categories |
+| `/api/v1/categories` | POST | Create new category |
+| `/api/v1/categories/:id` | GET | Get category details |
+| `/api/v1/categories/:id` | PUT | Update category details |
+| `/api/v1/categories/:id` | DELETE | Delete category |
 
 ### HSN & Tax Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/tax-rates` | GET | List all tax rates |
-| `/api/tax-rates` | POST | Create new tax rate |
-| `/api/tax-rates/:id` | GET | Get tax rate details |
-| `/api/tax-rates/:id` | PUT | Update tax rate details |
-| `/api/tax-rates/:id` | DELETE | Delete tax rate |
-| `/api/tax-rates/hsn/:hsnCode` | GET | Get tax rates by HSN code |
+| `/api/v1/tax-rates` | GET | List all tax rates |
+| `/api/v1/tax-rates` | POST | Create new tax rate |
+| `/api/v1/tax-rates/:id` | GET | Get tax rate details |
+| `/api/v1/tax-rates/:id` | PUT | Update tax rate details |
+| `/api/v1/tax-rates/:id` | DELETE | Delete tax rate |
+| `/api/v1/tax-rates/hsn/:hsnCode` | GET | Get tax rates by HSN code |
 
 ## Inventory Management
 
 ### Inventory Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/inventory` | GET | List all inventory |
-| `/api/inventory` | POST | Create new inventory entry |
-| `/api/inventory/:id` | GET | Get inventory details |
-| `/api/inventory/:id` | PUT | Update inventory details |
-| `/api/inventory/:id` | DELETE | Delete inventory entry |
-| `/api/inventory/location/:locationId` | GET | Get inventory by location |
-| `/api/inventory/product/:productId` | GET | Get inventory by product |
-| `/api/inventory/transfer` | POST | Transfer inventory between locations |
-| `/api/inventory/adjustment` | POST | Adjust inventory quantities |
+| `/api/v1/inventory` | GET | List all inventory |
+| `/api/v1/inventory` | POST | Create new inventory entry |
+| `/api/v1/inventory/:id` | GET | Get inventory details |
+| `/api/v1/inventory/:id` | PUT | Update inventory details |
+| `/api/v1/inventory/:id` | DELETE | Delete inventory entry |
+| `/api/v1/inventory/location/:locationId` | GET | Get inventory by location |
+| `/api/v1/inventory/product/:productId` | GET | Get inventory by product |
+| `/api/v1/inventory/transfer` | POST | Transfer inventory between locations |
+| `/api/v1/inventory/adjustment` | POST | Adjust inventory quantities |
 
 ### Batch Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/batches` | GET | List all batches |
-| `/api/batches` | POST | Create new batch |
-| `/api/batches/:id` | GET | Get batch details |
-| `/api/batches/:id` | PUT | Update batch details |
-| `/api/batches/:id` | DELETE | Delete batch |
-| `/api/batches/product/:productId` | GET | Get batches by product |
-| `/api/batches/quality-check` | POST | Perform quality check on batch |
+| `/api/v1/batches` | GET | List all batches |
+| `/api/v1/batches` | POST | Create new batch |
+| `/api/v1/batches/:id` | GET | Get batch details |
+| `/api/v1/batches/:id` | PUT | Update batch details |
+| `/api/v1/batches/:id` | DELETE | Delete batch |
+| `/api/v1/batches/product/:productId` | GET | Get batches by product |
+| `/api/v1/batches/quality-check` | POST | Perform quality check on batch |
 
 ## Manufacturing Management
 
 ### Manufacturing Unit Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/manufacturing-units` | GET | List all manufacturing units |
-| `/api/manufacturing-units` | POST | Create new manufacturing unit |
-| `/api/manufacturing-units/:id` | GET | Get manufacturing unit details |
-| `/api/manufacturing-units/:id` | PUT | Update manufacturing unit details |
-| `/api/manufacturing-units/:id` | DELETE | Delete manufacturing unit |
+| `/api/v1/manufacturing-units` | GET | List all manufacturing units |
+| `/api/v1/manufacturing-units` | POST | Create new manufacturing unit |
+| `/api/v1/manufacturing-units/:id` | GET | Get manufacturing unit details |
+| `/api/v1/manufacturing-units/:id` | PUT | Update manufacturing unit details |
+| `/api/v1/manufacturing-units/:id` | DELETE | Delete manufacturing unit |
 
 ### Production Order Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/production-orders` | GET | List all production orders |
-| `/api/production-orders` | POST | Create new production order |
-| `/api/production-orders/:id` | GET | Get production order details |
-| `/api/production-orders/:id` | PUT | Update production order details |
-| `/api/production-orders/:id` | DELETE | Delete production order |
-| `/api/production-orders/:id/start` | POST | Start production order |
-| `/api/production-orders/:id/complete` | POST | Complete production order |
-| `/api/production-orders/:id/items` | GET | Get production order items |
+| `/api/v1/production-orders` | GET | List all production orders |
+| `/api/v1/production-orders` | POST | Create new production order |
+| `/api/v1/production-orders/:id` | GET | Get production order details |
+| `/api/v1/production-orders/:id` | PUT | Update production order details |
+| `/api/v1/production-orders/:id` | DELETE | Delete production order |
+| `/api/v1/production-orders/:id/start` | POST | Start production order |
+| `/api/v1/production-orders/:id/complete` | POST | Complete production order |
+| `/api/v1/production-orders/:id/items` | GET | Get production order items |
 
 ### Quality Control
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/quality-checks` | GET | List all quality checks |
-| `/api/quality-checks` | POST | Create new quality check |
-| `/api/quality-checks/:id` | GET | Get quality check details |
-| `/api/quality-checks/:id` | PUT | Update quality check details |
-| `/api/quality-checks/:id` | DELETE | Delete quality check |
-| `/api/quality-checks/batch/:batchId` | GET | Get quality checks by batch |
+| `/api/v1/quality-checks` | GET | List all quality checks |
+| `/api/v1/quality-checks` | POST | Create new quality check |
+| `/api/v1/quality-checks/:id` | GET | Get quality check details |
+| `/api/v1/quality-checks/:id` | PUT | Update quality check details |
+| `/api/v1/quality-checks/:id` | DELETE | Delete quality check |
+| `/api/v1/quality-checks/batch/:batchId` | GET | Get quality checks by batch |
 
 ## Purchase Management
 
 ### Vendor Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/vendors` | GET | List all vendors |
-| `/api/vendors` | POST | Create new vendor |
-| `/api/vendors/:id` | GET | Get vendor details |
-| `/api/vendors/:id` | PUT | Update vendor details |
-| `/api/vendors/:id` | DELETE | Delete vendor |
-| `/api/vendors/:id/gst-details` | GET | Get vendor GST details |
+| `/api/v1/vendors` | GET | List all vendors |
+| `/api/v1/vendors` | POST | Create new vendor |
+| `/api/v1/vendors/:id` | GET | Get vendor details |
+| `/api/v1/vendors/:id` | PUT | Update vendor details |
+| `/api/v1/vendors/:id` | DELETE | Delete vendor |
+| `/api/v1/vendors/:id/gst-details` | GET | Get vendor GST details |
 
 ### Purchase Order Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/purchase-orders` | GET | List all purchase orders |
-| `/api/purchase-orders` | POST | Create new purchase order |
-| `/api/purchase-orders/:id` | GET | Get purchase order details |
-| `/api/purchase-orders/:id` | PUT | Update purchase order details |
-| `/api/purchase-orders/:id` | DELETE | Delete purchase order |
-| `/api/purchase-orders/:id/approve` | POST | Approve purchase order |
-| `/api/purchase-orders/:id/receive` | POST | Receive purchase order items |
-| `/api/purchase-orders/:id/items` | GET | Get purchase order items |
+| `/api/v1/purchase-orders` | GET | List all purchase orders |
+| `/api/v1/purchase-orders` | POST | Create new purchase order |
+| `/api/v1/purchase-orders/:id` | GET | Get purchase order details |
+| `/api/v1/purchase-orders/:id` | PUT | Update purchase order details |
+| `/api/v1/purchase-orders/:id` | DELETE | Delete purchase order |
+| `/api/v1/purchase-orders/:id/approve` | POST | Approve purchase order |
+| `/api/v1/purchase-orders/:id/receive` | POST | Receive purchase order items |
+| `/api/v1/purchase-orders/:id/items` | GET | Get purchase order items |
 
 ## Sales Management
 
 ### Customer Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/customers` | GET | List all customers |
-| `/api/customers` | POST | Create new customer |
-| `/api/customers/:id` | GET | Get customer details |
-| `/api/customers/:id` | PUT | Update customer details |
-| `/api/customers/:id` | DELETE | Delete customer |
-| `/api/customers/:id/gst-details` | GET | Get customer GST details |
+| `/api/v1/customers` | GET | List all customers |
+| `/api/v1/customers` | POST | Create new customer |
+| `/api/v1/customers/:id` | GET | Get customer details |
+| `/api/v1/customers/:id` | PUT | Update customer details |
+| `/api/v1/customers/:id` | DELETE | Delete customer |
+| `/api/v1/customers/:id/gst-details` | GET | Get customer GST details |
 
 ### Order Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/orders` | GET | List all orders |
-| `/api/orders` | POST | Create new order |
-| `/api/orders/:id` | GET | Get order details |
-| `/api/orders/:id` | PUT | Update order details |
-| `/api/orders/:id` | DELETE | Delete order |
-| `/api/orders/:id/confirm` | POST | Confirm order |
-| `/api/orders/:id/ship` | POST | Ship order |
-| `/api/orders/:id/deliver` | POST | Mark order as delivered |
-| `/api/orders/:id/items` | GET | Get order items |
+| `/api/v1/orders` | GET | List all orders |
+| `/api/v1/orders` | POST | Create new order |
+| `/api/v1/orders/:id` | GET | Get order details |
+| `/api/v1/orders/:id` | PUT | Update order details |
+| `/api/v1/orders/:id` | DELETE | Delete order |
+| `/api/v1/orders/:id/confirm` | POST | Confirm order |
+| `/api/v1/orders/:id/ship` | POST | Ship order |
+| `/api/v1/orders/:id/deliver` | POST | Mark order as delivered |
+| `/api/v1/orders/:id/items` | GET | Get order items |
 
 ## Location Management
 
 ### Location Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/locations` | GET | List all locations |
-| `/api/locations` | POST | Create new location |
-| `/api/locations/:id` | GET | Get location details |
-| `/api/locations/:id` | PUT | Update location details |
-| `/api/locations/:id` | DELETE | Delete location |
-| `/api/locations/type/:type` | GET | Get locations by type |
-| `/api/locations/inventory/:locationId` | GET | Get inventory at location |
+| `/api/v1/locations` | GET | List all locations |
+| `/api/v1/locations` | POST | Create new location |
+| `/api/v1/locations/:id` | GET | Get location details |
+| `/api/v1/locations/:id` | PUT | Update location details |
+| `/api/v1/locations/:id` | DELETE | Delete location |
+| `/api/v1/locations/type/:type` | GET | Get locations by type |
+| `/api/v1/locations/inventory/:locationId` | GET | Get inventory at location |
 
 ## BOM Management
 
 ### BOM Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/boms` | GET | List all BOMs |
-| `/api/boms` | POST | Create new BOM |
-| `/api/boms/:id` | GET | Get BOM details |
-| `/api/boms/:id` | PUT | Update BOM details |
-| `/api/boms/:id` | DELETE | Delete BOM |
-| `/api/boms/product/:productId` | GET | Get BOM by product |
-| `/api/boms/:id/components` | GET | Get BOM components |
+| `/api/v1/boms` | GET | List all BOMs |
+| `/api/v1/boms` | POST | Create new BOM |
+| `/api/v1/boms/:id` | GET | Get BOM details |
+| `/api/v1/boms/:id` | PUT | Update BOM details |
+| `/api/v1/boms/:id` | DELETE | Delete BOM |
+| `/api/v1/boms/product/:productId` | GET | Get BOM by product |
+| `/api/v1/boms/:id/components` | GET | Get BOM components |
 
 ## Unit Management
 
 ### Unit Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/units` | GET | List all units |
-| `/api/units` | POST | Create new unit |
-| `/api/units/:id` | GET | Get unit details |
-| `/api/units/:id` | PUT | Update unit details |
-| `/api/units/:id` | DELETE | Delete unit |
-| `/api/units/type/:type` | GET | Get units by type |
+| `/api/v1/units` | GET | List all units |
+| `/api/v1/units` | POST | Create new unit |
+| `/api/v1/units/:id` | GET | Get unit details |
+| `/api/v1/units/:id` | PUT | Update unit details |
+| `/api/v1/units/:id` | DELETE | Delete unit |
+| `/api/v1/units/type/:type` | GET | Get units by type |
 
 ## Audit & Reporting
 
 ### Audit Logs
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/audit-logs` | GET | List all audit logs |
-| `/api/audit-logs/:id` | GET | Get audit log details |
-| `/api/audit-logs/user/:userId` | GET | Get audit logs by user |
-| `/api/audit-logs/entity/:entityType/:entityId` | GET | Get audit logs by entity |
+| `/api/v1/audit-logs` | GET | List all audit logs |
+| `/api/v1/audit-logs/:id` | GET | Get audit log details |
+| `/api/v1/audit-logs/user/:userId` | GET | Get audit logs by user |
+| `/api/v1/audit-logs/entity/:entityType/:entityId` | GET | Get audit logs by entity |
 
 ### Reports
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/reports/inventory` | GET | Generate inventory report |
-| `/api/reports/sales` | GET | Generate sales report |
-| `/api/reports/purchases` | GET | Generate purchases report |
-| `/api/reports/production` | GET | Generate production report |
-| `/api/reports/gst` | GET | Generate GST report |
-| `/api/reports/stock-movement` | GET | Generate stock movement report |
+| `/api/v1/reports/inventory` | GET | Generate inventory report |
+| `/api/v1/reports/sales` | GET | Generate sales report |
+| `/api/v1/reports/purchases` | GET | Generate purchases report |
+| `/api/v1/reports/production` | GET | Generate production report |
+| `/api/v1/reports/gst` | GET | Generate GST report |
+| `/api/v1/reports/stock-movement` | GET | Generate stock movement report |
 
 ## API Features
 
@@ -364,7 +364,7 @@
 ## Authentication
 
 ### Login
-- **Endpoint**: `POST /api/v1/auth`
+- **Endpoint**: `POST /api/v1/v1/auth`
 - **Description**: Authenticate user and get JWT token
 - **Request Body**:
   ```json
@@ -390,7 +390,7 @@
 ## Companies
 
 ### Get Company Details
-- **Endpoint**: `GET /api/v1/companies?companyId=string`
+- **Endpoint**: `GET /api/v1/v1/companies?companyId=string`
 - **Description**: Get company details by ID
 - **Response**:
   ```json
@@ -417,26 +417,26 @@
   ```
 
 ### Create Company
-- **Endpoint**: `POST /api/v1/companies`
+- **Endpoint**: `POST /api/v1/v1/companies`
 - **Description**: Create a new company
 - **Request Body**: Same as Get Company Details response
 - **Response**: Created company details
 
 ### Update Company
-- **Endpoint**: `PUT /api/v1/companies?companyId=string`
+- **Endpoint**: `PUT /api/v1/v1/companies?companyId=string`
 - **Description**: Update company details
 - **Request Body**: Fields to update
 - **Response**: Updated company details
 
 ### Delete Company
-- **Endpoint**: `DELETE /api/v1/companies?companyId=string`
+- **Endpoint**: `DELETE /api/v1/v1/companies?companyId=string`
 - **Description**: Delete a company
 - **Response**: Success message
 
 ## Products
 
 ### Get Products
-- **Endpoint**: `GET /api/v1/products?companyId=string&categoryId=string`
+- **Endpoint**: `GET /api/v1/v1/products?companyId=string&categoryId=string`
 - **Description**: Get all products for a company, optionally filtered by category
 - **Response**:
   ```json
@@ -466,26 +466,26 @@
   ```
 
 ### Create Product
-- **Endpoint**: `POST /api/v1/products`
+- **Endpoint**: `POST /api/v1/v1/products`
 - **Description**: Create a new product
 - **Request Body**: Same as Get Products response
 - **Response**: Created product details
 
 ### Update Product
-- **Endpoint**: `PUT /api/v1/products?productId=string`
+- **Endpoint**: `PUT /api/v1/v1/products?productId=string`
 - **Description**: Update product details
 - **Request Body**: Fields to update
 - **Response**: Updated product details
 
 ### Delete Product
-- **Endpoint**: `DELETE /api/v1/products?productId=string`
+- **Endpoint**: `DELETE /api/v1/v1/products?productId=string`
 - **Description**: Delete a product
 - **Response**: Success message
 
 ## Inventory
 
 ### Get Inventory
-- **Endpoint**: `GET /api/v1/inventory?companyId=string&locationId=string&productId=string`
+- **Endpoint**: `GET /api/v1/v1/inventory?companyId=string&locationId=string&productId=string`
 - **Description**: Get inventory details, optionally filtered by location and product
 - **Response**:
   ```json
@@ -519,7 +519,7 @@
   ```
 
 ### Create/Update Inventory
-- **Endpoint**: `POST /api/v1/inventory`
+- **Endpoint**: `POST /api/v1/v1/inventory`
 - **Description**: Create or update inventory
 - **Request Body**:
   ```json
@@ -534,14 +534,14 @@
 - **Response**: Created/Updated inventory details
 
 ### Delete Inventory
-- **Endpoint**: `DELETE /api/v1/inventory?inventoryId=string`
+- **Endpoint**: `DELETE /api/v1/v1/inventory?inventoryId=string`
 - **Description**: Delete inventory
 - **Response**: Success message
 
 ## Subscription Management
 
 ### Get Subscription Plans
-- **Endpoint**: `GET /api/v1/subscriptions/plans`
+- **Endpoint**: `GET /api/v1/v1/subscriptions/plans`
 - **Description**: List available subscription plans
 - **Response**:
   ```json
@@ -561,7 +561,7 @@
   ```
 
 ### Get Company Subscription
-- **Endpoint**: `GET /api/v1/companies/:companyId/subscription`
+- **Endpoint**: `GET /api/v1/v1/companies/:companyId/subscription`
 - **Description**: Get current subscription details
 - **Response**:
   ```json
@@ -588,7 +588,7 @@
   ```
 
 ### Create Subscription
-- **Endpoint**: `POST /api/v1/companies/:companyId/subscription`
+- **Endpoint**: `POST /api/v1/v1/companies/:companyId/subscription`
 - **Description**: Create a new subscription
 - **Request Body**:
   ```json
@@ -601,18 +601,18 @@
 - **Response**: Created subscription details
 
 ### Update Subscription
-- **Endpoint**: `PUT /api/v1/companies/:companyId/subscription`
+- **Endpoint**: `PUT /api/v1/v1/companies/:companyId/subscription`
 - **Description**: Update subscription plan
 - **Request Body**: Fields to update
 - **Response**: Updated subscription details
 
 ### Cancel Subscription
-- **Endpoint**: `DELETE /api/v1/companies/:companyId/subscription`
+- **Endpoint**: `DELETE /api/v1/v1/companies/:companyId/subscription`
 - **Description**: Cancel subscription
 - **Response**: Success message
 
 ### Track Usage
-- **Endpoint**: `POST /api/v1/companies/:companyId/subscription/usage`
+- **Endpoint**: `POST /api/v1/v1/companies/:companyId/subscription/usage`
 - **Description**: Track subscription usage
 - **Request Body**:
   ```json
@@ -624,7 +624,7 @@
 - **Response**: Updated usage details
 
 ### Get Billing History
-- **Endpoint**: `GET /api/v1/companies/:companyId/subscription/payments`
+- **Endpoint**: `GET /api/v1/v1/companies/:companyId/subscription/payments`
 - **Description**: Get subscription payment history
 - **Response**:
   ```json
