@@ -1,0 +1,35 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#f5f5f5" />
+  
+  <!-- Main shelving unit -->
+  <rect x="50" y="45" width="100" height="110" rx="5" ry="5" fill="#3498db" />
+  
+  <!-- Shelf lines -->
+  <line x1="50" y1="75" x2="150" y2="75" stroke="#ffffff" stroke-width="3" />
+  <line x1="50" y1="105" x2="150" y2="105" stroke="#ffffff" stroke-width="3" />
+  <line x1="50" y1="135" x2="150" y2="135" stroke="#ffffff" stroke-width="3" />
+  
+  <!-- Inventory items (boxes) -->
+  <rect x="60" y="50" width="20" height="20" fill="#f1c40f" />
+  <rect x="90" y="55" width="25" height="15" fill="#e74c3c" />
+  <rect x="125" y="52" width="15" height="18" fill="#2ecc71" />
+  
+  <rect x="65" y="80" width="25" height="20" fill="#2ecc71" />
+  <rect x="100" y="85" width="15" height="15" fill="#f1c40f" />
+  <rect x="125" y="80" width="20" height="20" fill="#e74c3c" />
+  
+  <rect x="60" y="110" width="15" height="20" fill="#e74c3c" />
+  <rect x="85" y="112" width="20" height="18" fill="#2ecc71" />
+  <rect x="115" y="110" width="25" height="20" fill="#f1c40f" />
+  
+  <!-- Clipboard with check mark overlay -->
+  <rect x="75" y="60" width="50" height="65" rx="3" ry="3" fill="#34495e" opacity="0.85" />
+  <rect x="80" y="65" width="40" height="55" fill="#ffffff" />
+  <line x1="85" y1="75" x2="115" y2="75" stroke="#95a5a6" stroke-width="2" />
+  <line x1="85" y1="85" x2="115" y2="85" stroke="#95a5a6" stroke-width="2" />
+  <line x1="85" y1="95" x2="115" y2="95" stroke="#95a5a6" stroke-width="2" />
+  
+  <!-- Check mark -->
+  <path d="M90,105 L95,110 L105,95" stroke="#27ae60" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
