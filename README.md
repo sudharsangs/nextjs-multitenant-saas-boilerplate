@@ -20,6 +20,80 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Docker Setup
+
+This application has been containerized for easy deployment and consistent development environments.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+### Environment Setup
+
+1. Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+2. Update the `.env` file with your specific configuration values.
+
+### Running with Docker Compose
+
+To start the application and its dependencies:
+
+```bash
+docker-compose up -d
+```
+
+This will start both the Next.js application and PostgreSQL database.
+
+To stop all containers:
+
+```bash
+docker-compose down
+```
+
+### Building for Production
+
+To build and run a production-optimized version:
+
+```bash
+docker-compose -f docker-compose.yml build
+docker-compose -f docker-compose.yml up -d
+```
+
+### Database Migrations
+
+To run database migrations inside the Docker container:
+
+```bash
+docker-compose exec app npm run db:migrate
+```
+
+### Useful Docker Commands
+
+- View running containers:
+  ```bash
+  docker-compose ps
+  ```
+
+- View logs:
+  ```bash
+  docker-compose logs -f app
+  ```
+
+- Access the application container shell:
+  ```bash
+  docker-compose exec app sh
+  ```
+
+- Access the PostgreSQL database:
+  ```bash
+  docker-compose exec db psql -U postgres -d factostack
+  ```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
