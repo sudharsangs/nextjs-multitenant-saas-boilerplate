@@ -1,465 +1,651 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { 
-  Plus, 
   Search, 
   Filter, 
   ArrowUpDown, 
-  MoreHorizontal, 
-  AlertCircle,
-  ArrowRightLeft,
   FileDown,
-  Boxes,
-  PackageCheck,
-  Clock,
-  PackageX,
-  Edit3,
-  Warehouse
+  Box,
+  AlertCircle
 } from "lucide-react";
-import Link from "next/link";
+import { Header } from "@/components/shared/header";
+import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardContent
+} from "@/components/ui/card";
 
-interface InventoryItem {
-  id: string;
-  productId: string;
-  productName: string;
-  productCode: string;
-  locationId: string;
-  locationName: string;
-  locationType: 'WAREHOUSE' | 'FACTORY' | 'STORE';
-  quantity: number;
-  unit: 'PIECE' | 'KG' | 'LITER' | 'METER' | 'SQUARE_METER' | 'CUBIC_METER';
-  status: 'AVAILABLE' | 'RESERVED' | 'DAMAGED' | 'QUARANTINED';
-  lastMovedAt: string;
-  lastCountedAt: string;
-  expiryDate?: string;
-}
+// Mock inventory data
+const mockInventory = [
+  { 
+    id: "inv1", 
+    productId: "prod1",
+    productName: "Steel Bolts (10mm)", 
+    productCode: "STL-B10",
+    category: "Raw Materials",
+    locations: [
+      { locationId: "loc1", locationName: "Main Warehouse", quantity: 1500 },
+      { locationId: "loc2", locationName: "Factory Floor", quantity: 850 },
+      { locationId: "loc3", locationName: "Assembly Area", quantity: 150 },
+    ],
+    totalStock: 2500,
+    unit: "PIECE",
+    reorderPoint: 500,
+    costPrice: 1.50
+  },
+  { 
+    id: "inv2", 
+    productId: "prod2",
+    productName: "Aluminum Sheet (2mm)", 
+    productCode: "ALU-S2",
+    category: "Raw Materials",
+    locations: [
+      { locationId: "loc1", locationName: "Main Warehouse", quantity: 150 },
+    ],
+    totalStock: 150,
+    unit: "PIECE",
+    reorderPoint: 50,
+    costPrice: 35.75
+  },
+  { 
+    id: "inv3", 
+    productId: "prod3",
+    productName: "Plastic Housing Type B", 
+    productCode: "PLT-HB",
+    category: "Packaging Materials",
+    locations: [
+      { locationId: "loc1", locationName: "Main Warehouse", quantity: 250 },
+      { locationId: "loc4", locationName: "Packaging Station", quantity: 70 },
+    ],
+    totalStock: 320,
+    unit: "PIECE",
+    reorderPoint: 100,
+    costPrice: 12.25
+  },
+  { 
+    id: "inv4", 
+    productId: "prod4",
+    productName: "Circuit Board X1", 
+    productCode: "CBX-001",
+    category: "Electrical Components",
+    locations: [
+      { locationId: "loc1", locationName: "Main Warehouse", quantity: 25 },
+      { locationId: "loc5", locationName: "Electronics Lab", quantity: 50 },
+    ],
+    totalStock: 75,
+    unit: "PIECE",
+    reorderPoint: 25,
+    costPrice: 45.00
+  },
+  { 
+    id: "inv5", 
+    productId: "prod5",
+    productName: "LED Bulbs 5W", 
+    productCode: "LED-B5W",
+    category: "Electrical Components",
+    locations: [
+      { locationId: "loc1", locationName: "Main Warehouse", quantity: 350 },
+      { locationId: "loc5", locationName: "Electronics Lab", quantity: 100 },
+    ],
+    totalStock: 450,
+    unit: "PIECE",
+    reorderPoint: 100,
+    costPrice: 3.25
+  },
+  { 
+    id: "inv6", 
+    productId: "prod6",
+    productName: "Stainless Steel Screws", 
+    productCode: "SSS-001",
+    category: "Raw Materials",
+    locations: [
+      { locationId: "loc1", locationName: "Main Warehouse", quantity: 4000 },
+      { locationId: "loc2", locationName: "Factory Floor", quantity: 800 },
+      { locationId: "loc3", locationName: "Assembly Area", quantity: 200 },
+    ],
+    totalStock: 5000,
+    unit: "PIECE",
+    reorderPoint: 1000,
+    costPrice: 0.25
+  },
+  { 
+    id: "inv7", 
+    productId: "prod7",
+    productName: "Thermal Paste", 
+    productCode: "TP-100",
+    category: "Electrical Components",
+    locations: [
+      { locationId: "loc1", locationName: "Main Warehouse", quantity: 15 },
+      { locationId: "loc5", locationName: "Electronics Lab", quantity: 30 },
+    ],
+    totalStock: 45,
+    unit: "PIECE",
+    reorderPoint: 20,
+    costPrice: 8.00
+  },
+  { 
+    id: "inv8", 
+    productId: "prod8",
+    productName: "Circuit Board X2", 
+    productCode: "CBX-002",
+    category: "Electrical Components",
+    locations: [],
+    totalStock: 0,
+    unit: "PIECE",
+    reorderPoint: 15,
+    costPrice: 65.00
+  },
+];
 
-export default function StockManagementPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+// Filter options
+const categoryFilters = [
+  "All Categories",
+  "Raw Materials",
+  "Finished Goods",
+  "Packaging Materials",
+  "Electrical Components",
+  "Mechanical Parts",
+];
 
-  // Dummy data for inventory
-  const [inventory, setInventory] = useState<InventoryItem[]>([
-    {
-      id: "1",
-      productId: "1",
-      productName: "Steel Bolts (10mm)",
-      productCode: "SB-10MM",
-      locationId: "1",
-      locationName: "Main Warehouse",
-      locationType: "WAREHOUSE",
-      quantity: 5200,
-      unit: "PIECE",
-      status: "AVAILABLE",
-      lastMovedAt: "2025-04-01T10:30:00Z",
-      lastCountedAt: "2025-03-15T09:00:00Z"
-    },
-    {
-      id: "2",
-      productId: "2",
-      productName: "Aluminum Sheet (2mm)",
-      productCode: "AL-S2MM",
-      locationId: "1",
-      locationName: "Main Warehouse",
-      locationType: "WAREHOUSE",
-      quantity: 157,
-      unit: "PIECE",
-      status: "AVAILABLE",
-      lastMovedAt: "2025-04-02T14:15:00Z",
-      lastCountedAt: "2025-03-15T09:15:00Z"
-    },
-    {
-      id: "3",
-      productId: "3",
-      productName: "Plastic Housing Type B",
-      productCode: "PH-TYPB",
-      locationId: "2",
-      locationName: "Factory Floor",
-      locationType: "FACTORY",
-      quantity: 352,
-      unit: "PIECE",
-      status: "RESERVED",
-      lastMovedAt: "2025-03-28T16:40:00Z",
-      lastCountedAt: "2025-03-15T09:30:00Z"
-    },
-    {
-      id: "4",
-      productId: "4",
-      productName: "Copper Wire (1.5mm)",
-      productCode: "CW-1.5MM",
-      locationId: "1",
-      locationName: "Main Warehouse",
-      locationType: "WAREHOUSE",
-      quantity: 1500,
-      unit: "METER",
-      status: "AVAILABLE",
-      lastMovedAt: "2025-03-25T11:20:00Z",
-      lastCountedAt: "2025-03-15T09:45:00Z"
-    },
-    {
-      id: "5",
-      productId: "3",
-      productName: "Plastic Housing Type B",
-      productCode: "PH-TYPB",
-      locationId: "3",
-      locationName: "Retail Store",
-      locationType: "STORE",
-      quantity: 58,
-      unit: "PIECE",
-      status: "AVAILABLE",
-      lastMovedAt: "2025-04-03T09:10:00Z",
-      lastCountedAt: "2025-03-15T10:00:00Z"
-    },
-    {
-      id: "6",
-      productId: "5",
-      productName: "Motor Assembly XL-5",
-      productCode: "MA-XL5",
-      locationId: "2",
-      locationName: "Factory Floor",
-      locationType: "FACTORY",
-      quantity: 42,
-      unit: "PIECE",
-      status: "DAMAGED",
-      lastMovedAt: "2025-03-29T08:45:00Z",
-      lastCountedAt: "2025-03-15T10:15:00Z"
-    },
-  ]);
+const locationFilters = [
+  "All Locations",
+  "Main Warehouse",
+  "Factory Floor",
+  "Assembly Area",
+  "Packaging Station",
+  "Electronics Lab",
+];
 
-  // Dummy data for locations
-  const locations = [
-    { id: "1", name: "Main Warehouse", type: "WAREHOUSE" },
-    { id: "2", name: "Factory Floor", type: "FACTORY" },
-    { id: "3", name: "Retail Store", type: "STORE" },
-  ];
+const stockStatusFilters = [
+  "All Statuses",
+  "In Stock",
+  "Low Stock",
+  "Out of Stock",
+];
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+export default function InventoryStockPage() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedLocation, setSelectedLocation] = useState("All Locations");
+  const [selectedStockStatus, setSelectedStockStatus] = useState("All Statuses");
+  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
+  const [sortField, setSortField] = useState("productName");
+  const [sortDirection, setSortDirection] = useState("asc");
+  
+  // Calculate total inventory value
+  const totalInventoryValue = mockInventory.reduce((sum, item) => {
+    return sum + (item.totalStock * item.costPrice);
+  }, 0);
+
+  // Calculate counts for KPI cards
+  const lowStockCount = mockInventory.filter(item => 
+    item.totalStock > 0 && item.totalStock <= item.reorderPoint
+  ).length;
+  
+  const outOfStockCount = mockInventory.filter(item => 
+    item.totalStock === 0
+  ).length;
+
+  // Filter and sort inventory
+  const filteredInventory = mockInventory
+    .filter((item) => {
+      // Search filter
+      const matchesSearch =
+        searchQuery === "" ||
+        item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.productCode.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Category filter
+      const matchesCategory =
+        selectedCategory === "All Categories" || item.category === selectedCategory;
+      
+      // Location filter
+      const matchesLocation =
+        selectedLocation === "All Locations" || 
+        item.locations.some(loc => loc.locationName === selectedLocation);
+      
+      // Stock status filter
+      const matchesStockStatus =
+        selectedStockStatus === "All Statuses" ||
+        (selectedStockStatus === "In Stock" && item.totalStock > item.reorderPoint) ||
+        (selectedStockStatus === "Low Stock" && item.totalStock > 0 && item.totalStock <= item.reorderPoint) ||
+        (selectedStockStatus === "Out of Stock" && item.totalStock === 0);
+
+      return matchesSearch && matchesCategory && matchesLocation && matchesStockStatus;
+    })
+    .sort((a, b) => {
+      // Sort by selected field
+      if (sortField === "totalStock" || sortField === "reorderPoint" || sortField === "costPrice") {
+        return sortDirection === "asc" 
+          ? a[sortField] - b[sortField] 
+          : b[sortField] - a[sortField];
+      } else {
+        // Sort alphabetically for other fields
+        const valueA = String(a[sortField]).toLowerCase();
+        const valueB = String(b[sortField]).toLowerCase();
+        return sortDirection === "asc"
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      }
+    });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      // Toggle sort direction if clicking the same field
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new sort field and reset direction to ascending
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
-  const handleLocationFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedLocation(e.target.value);
+  const renderSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown size={14} />;
+    return sortDirection === "asc" ? (
+      <ArrowUpDown size={14} className="text-primary" />
+    ) : (
+      <ArrowUpDown size={14} className="text-primary rotate-180" />
+    );
   };
 
-  const handleStatusFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedStatus(e.target.value);
-  };
-
-  // Filter inventory based on filters
-  const filteredInventory = inventory.filter((item) => {
-    // Search term filter
-    const matchesSearch = 
-      item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.productCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.locationName.toLowerCase().includes(searchTerm.toLowerCase());
+  const toggleRowExpansion = (productId: string) => {
+    const newExpandedProducts = new Set(expandedProducts);
     
-    // Location filter
-    const matchesLocation = selectedLocation ? item.locationId === selectedLocation : true;
+    if (newExpandedProducts.has(productId)) {
+      newExpandedProducts.delete(productId);
+    } else {
+      newExpandedProducts.add(productId);
+    }
     
-    // Status filter
-    const matchesStatus = selectedStatus ? item.status === selectedStatus : true;
-    
-    return matchesSearch && matchesLocation && matchesStatus;
-  });
-
-  // Get inventory status counts
-  const availableCount = inventory.filter(item => item.status === "AVAILABLE").length;
-  const reservedCount = inventory.filter(item => item.status === "RESERVED").length;
-  const damagedCount = inventory.filter(item => item.status === "DAMAGED").length;
-  const quarantinedCount = inventory.filter(item => item.status === "QUARANTINED").length;
-
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
-  };
-
-  // Format unit for display
-  const formatUnit = (unit: string) => {
-    return unit.replace("_", " ").toLowerCase();
+    setExpandedProducts(newExpandedProducts);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Stock Management</h2>
-        <div className="flex items-center gap-2">
-          <Link 
-            href="/inventory/stock/transfer" 
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background px-4 py-2 shadow-sm hover:bg-accent"
-          >
-            <ArrowRightLeft size={16} className="mr-2" />
-            Transfer Stock
-          </Link>
-          <Link 
-            href="/inventory/stock/count" 
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background px-4 py-2 shadow-sm hover:bg-accent"
-          >
-            <PackageCheck size={16} className="mr-2" />
-            Stock Count
-          </Link>
-          <Link 
-            href="/inventory/stock/adjust" 
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-10 py-2 px-4 hover:bg-primary/90"
-          >
-            <Edit3 size={16} className="mr-2" />
-            Adjust Stock
-          </Link>
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Search inventory..."
-            className="w-full rounded-md border border-input bg-background pl-8 p-2 text-sm shadow-sm outline-none focus:border-primary"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            className="w-full sm:w-auto rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus:border-primary"
-            value={selectedLocation}
-            onChange={handleLocationFilter}
-          >
-            <option value="">All Locations</option>
-            {locations.map(location => (
-              <option key={location.id} value={location.id}>{location.name}</option>
-            ))}
-          </select>
-          <select
-            className="w-full sm:w-auto rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus:border-primary"
-            value={selectedStatus}
-            onChange={handleStatusFilter}
-          >
-            <option value="">All Statuses</option>
-            <option value="AVAILABLE">Available</option>
-            <option value="RESERVED">Reserved</option>
-            <option value="DAMAGED">Damaged</option>
-            <option value="QUARANTINED">Quarantined</option>
-          </select>
-          <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm">
-            <FileDown size={16} className="mr-2" />
-            Export
-          </button>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">Available</p>
-            <Boxes size={18} className="text-green-500" />
-          </div>
-          <p className="text-2xl font-bold text-green-500">{availableCount}</p>
-        </div>
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">Reserved</p>
-            <Clock size={18} className="text-blue-500" />
-          </div>
-          <p className="text-2xl font-bold text-blue-500">{reservedCount}</p>
-        </div>
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">Damaged</p>
-            <PackageX size={18} className="text-red-500" />
-          </div>
-          <p className="text-2xl font-bold text-red-500">{damagedCount}</p>
-        </div>
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">Quarantined</p>
-            <AlertCircle size={18} className="text-amber-500" />
-          </div>
-          <p className="text-2xl font-bold text-amber-500">{quarantinedCount}</p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading inventory data...</p>
-          </div>
-        </div>
-      ) : inventory.length === 0 ? (
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border flex flex-col items-center justify-center text-center h-64">
-          <AlertCircle size={40} className="text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No inventory found</h3>
-          <p className="text-muted-foreground mb-4 max-w-md">Start by adding products to your inventory or create a new product.</p>
-          <div className="flex gap-3">
-            <Link 
-              href="/inventory/stock/adjust"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-10 py-2 px-4 hover:bg-primary/90"
+    <div className="flex min-h-screen flex-col">
+      <main className="flex-1 container mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold">Inventory Stock</h1>
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                type="search"
+                placeholder="Search products..."
+                className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="outline"
+              className="flex gap-1"
+              onClick={() => router.push("/inventory/stock/count")}
             >
-              <Plus size={16} className="mr-2" />
-              Add Inventory
-            </Link>
-            <Link 
-              href="/inventory/products/new"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background px-4 py-2 shadow-sm hover:bg-accent"
-            >
-              <Plus size={16} className="mr-2" />
-              Add Product
-            </Link>
+              <Box size={16} />
+              Stock Count
+            </Button>
           </div>
         </div>
-      ) : (
-        <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-sm font-medium">Total Inventory Value</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₹ {totalInventoryValue.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Based on cost price
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-500">{lowStockCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Items below reorder point
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-sm font-medium">Out of Stock Items</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-destructive">{outOfStockCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Items with zero stock
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Filter size={16} />
+                Filters
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedCategory("All Categories");
+                  setSelectedLocation("All Locations");
+                  setSelectedStockStatus("All Statuses");
+                  setSearchQuery("");
+                }}
+              >
+                Reset
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Category Filter */}
+            <div>
+              <label htmlFor="categoryFilter" className="text-sm font-medium block mb-1">
+                Category
+              </label>
+              <select
+                id="categoryFilter"
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                {categoryFilters.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Location Filter */}
+            <div>
+              <label htmlFor="locationFilter" className="text-sm font-medium block mb-1">
+                Location
+              </label>
+              <select
+                id="locationFilter"
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+              >
+                {locationFilters.map((location) => (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Stock Status Filter */}
+            <div>
+              <label htmlFor="stockStatusFilter" className="text-sm font-medium block mb-1">
+                Stock Status
+              </label>
+              <select
+                id="stockStatusFilter"
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={selectedStockStatus}
+                onChange={(e) => setSelectedStockStatus(e.target.value)}
+              >
+                {stockStatusFilters.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Export Button */}
+            <div className="flex items-end gap-2 justify-end">
+              <Button variant="outline" size="sm" className="flex gap-1">
+                <FileDown size={14} />
+                Export
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Inventory Table */}
+        <div className="rounded-md border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead>
-                <tr className="bg-muted/50">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Product
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+              <thead className="bg-muted/50">
+                <tr className="border-b">
+                  <th className="w-10 p-3"></th>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("productName")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Product Name
+                      {renderSortIcon("productName")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Location
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("productCode")}
+                  >
+                    <div className="flex items-center gap-1">
+                      SKU/Code
+                      {renderSortIcon("productCode")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Status
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("category")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Category
+                      {renderSortIcon("category")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Quantity
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("totalStock")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Total Stock
+                      {renderSortIcon("totalStock")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Last Moved
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("reorderPoint")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Reorder Point
+                      {renderSortIcon("reorderPoint")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Last Counted
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("unit")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Unit
+                      {renderSortIcon("unit")}
                     </div>
                   </th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">
-                    Actions
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("costPrice")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Cost Price
+                      {renderSortIcon("costPrice")}
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
+                  >
+                    Value
+                  </th>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
+                  >
+                    Status
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredInventory.map((item) => (
-                  <tr key={item.id} className="border-t border-border hover:bg-muted/50">
-                    <td className="p-4 text-sm">
-                      <div className="flex items-center">
-                        <Link 
-                          href={`/inventory/products/${item.productId}`} 
-                          className="font-medium text-foreground hover:underline"
-                        >
-                          {item.productName}
-                        </Link>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{item.productCode}</p>
-                    </td>
-                    <td className="p-4 text-sm">
-                      <Link 
-                        href={`/locations/${item.locationId}`}
-                        className="flex items-center text-muted-foreground hover:text-foreground"
-                      >
-                        <Warehouse size={14} className="mr-1" />
-                        {item.locationName}
-                        <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-muted-foreground/20 rounded">
-                          {item.locationType}
-                        </span>
-                      </Link>
-                    </td>
-                    <td className="p-4 text-sm">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                        ${item.status === 'AVAILABLE' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
-                        ${item.status === 'RESERVED' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
-                        ${item.status === 'DAMAGED' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : ''}
-                        ${item.status === 'QUARANTINED' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : ''}
-                      `}>
-                        {item.status === 'AVAILABLE' && <Boxes size={12} className="mr-1" />}
-                        {item.status === 'RESERVED' && <Clock size={12} className="mr-1" />}
-                        {item.status === 'DAMAGED' && <PackageX size={12} className="mr-1" />}
-                        {item.status === 'QUARANTINED' && <AlertCircle size={12} className="mr-1" />}
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm">
-                      <span className="font-medium">
-                        {item.quantity} {formatUnit(item.unit)}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">
-                      {formatDate(item.lastMovedAt)}
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">
-                      {formatDate(item.lastCountedAt)}
-                    </td>
-                    <td className="p-4 text-sm text-right">
-                      <div className="flex justify-end">
-                        <Link 
-                          href={`/inventory/stock/edit/${item.id}`}
-                          className="text-muted-foreground hover:text-foreground mr-4"
-                        >
-                          Edit
-                        </Link>
-                        <button className="text-muted-foreground hover:text-foreground">
-                          <MoreHorizontal size={16} />
-                        </button>
+                {filteredInventory.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="text-center py-8 text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center">
+                        <Box size={40} className="mb-2 text-muted-foreground" />
+                        <p>No inventory items found</p>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredInventory.map((item) => {
+                    const isExpanded = expandedProducts.has(item.productId);
+                    const locationRows = isExpanded ? item.locations : [];
+                    const isLowStock = item.totalStock > 0 && item.totalStock <= item.reorderPoint;
+                    const isOutOfStock = item.totalStock === 0;
+                    
+                    return (
+                      <React.Fragment key={item.productId}>
+                        <tr className={`border-b ${isExpanded ? "bg-muted/30" : "hover:bg-muted/50"}`}>
+                          <td className="p-3 text-center">
+                            <button
+                              onClick={() => toggleRowExpansion(item.productId)}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                            >
+                              <span className="sr-only">Toggle locations</span>
+                              {isExpanded ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M5 12h14"></path>
+                                </svg>
+                              ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M5 12h14"></path>
+                                  <path d="M12 5v14"></path>
+                                </svg>
+                              )}
+                            </button>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-medium">
+                              {isLowStock || isOutOfStock ? (
+                                <div className="flex items-center gap-1">
+                                  {item.productName}
+                                  <AlertCircle
+                                    size={16}
+                                    className={isOutOfStock ? "text-destructive" : "text-amber-500"}
+                                  />
+                                </div>
+                              ) : (
+                                item.productName
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            {item.productCode}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            {item.category}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            <div className={
+                              isOutOfStock
+                                ? "text-destructive font-medium"
+                                : isLowStock
+                                ? "text-amber-500 font-medium"
+                                : ""
+                            }>
+                              {item.totalStock.toLocaleString()}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            {item.reorderPoint.toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            {item.unit === "PIECE" ? "Piece" : item.unit}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            ₹ {item.costPrice.toLocaleString('en-IN', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })}
+                          </td>
+                          <td className="py-3 px-4 text-sm">
+                            ₹ {(item.totalStock * item.costPrice).toLocaleString('en-IN', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
+                              ${!isLowStock && !isOutOfStock ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : ""}
+                              ${isLowStock ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" : ""}
+                              ${isOutOfStock ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" : ""}
+                            `}>
+                              {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded && locationRows.map((location) => (
+                          <tr 
+                            key={`${item.productId}-${location.locationId}`}
+                            className="border-b bg-muted/10"
+                          >
+                            <td className="p-3"></td>
+                            <td colSpan={3} className="py-2 px-4">
+                              <div className="text-sm text-muted-foreground pl-4 border-l-2 border-border">
+                                {location.locationName}
+                              </div>
+                            </td>
+                            <td className="py-2 px-4 text-sm">
+                              {location.quantity.toLocaleString()}
+                            </td>
+                            <td colSpan={5}></td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-            <p className="text-sm text-muted-foreground">
-              Showing <strong>{filteredInventory.length}</strong> of{" "}
-              <strong>{inventory.length}</strong> inventory records
-            </p>
-            <div className="flex items-center gap-2">
-              <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm" disabled>
+          
+          {/* Simple Pagination */}
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredInventory.length} of {mockInventory.length} items
+            </div>
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" disabled>
                 Previous
-              </button>
-              <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm" disabled>
+              </Button>
+              <Button variant="outline" size="sm" disabled>
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </div>
-      )}
+      </main>
     </div>
   );
 }

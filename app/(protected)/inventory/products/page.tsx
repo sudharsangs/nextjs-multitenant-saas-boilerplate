@@ -1,361 +1,482 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
-  Plus, 
   Search, 
+  Plus, 
   Filter, 
+  MoreHorizontal,
   ArrowUpDown, 
-  MoreHorizontal, 
-  AlertCircle,
-  Package,
+  Edit, 
+  Trash,
   FileDown,
-  FolderTree,
-  Clipboard,
-  Tag
+  FileUp,
+  Package
 } from "lucide-react";
-import Link from "next/link";
+import { Header } from "@/components/shared/header";
+import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardDescription, 
+  CardContent
+} from "@/components/ui/card";
 
-interface Product {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  categoryId: string;
-  categoryName: string;
-  unit: 'PIECE' | 'KG' | 'LITER' | 'METER' | 'SQUARE_METER' | 'CUBIC_METER';
-  hsnCode?: string;
-  stockLevel: number;
-  reorderPoint?: number;
-}
+// Mock products data
+const mockProducts = [
+  { 
+    id: "prod1", 
+    name: "Steel Bolts (10mm)", 
+    code: "STL-B10",
+    category: "Raw Materials",
+    totalStock: 2500,
+    unit: "PIECE",
+    reorderPoint: 500,
+    status: "Active"
+  },
+  { 
+    id: "prod2", 
+    name: "Aluminum Sheet (2mm)", 
+    code: "ALU-S2",
+    category: "Raw Materials",
+    totalStock: 150,
+    unit: "PIECE",
+    reorderPoint: 50,
+    status: "Active"
+  },
+  { 
+    id: "prod3", 
+    name: "Plastic Housing Type B", 
+    code: "PLT-HB",
+    category: "Packaging Materials",
+    totalStock: 320,
+    unit: "PIECE",
+    reorderPoint: 100,
+    status: "Active"
+  },
+  { 
+    id: "prod4", 
+    name: "Circuit Board X1", 
+    code: "CBX-001",
+    category: "Electrical Components",
+    totalStock: 75,
+    unit: "PIECE",
+    reorderPoint: 25,
+    status: "Inactive"
+  },
+  { 
+    id: "prod5", 
+    name: "LED Bulbs 5W", 
+    code: "LED-B5W",
+    category: "Electrical Components",
+    totalStock: 450,
+    unit: "PIECE",
+    reorderPoint: 100,
+    status: "Active"
+  },
+  { 
+    id: "prod6", 
+    name: "Stainless Steel Screws", 
+    code: "SSS-001",
+    category: "Raw Materials",
+    totalStock: 5000,
+    unit: "PIECE",
+    reorderPoint: 1000,
+    status: "Active"
+  },
+  { 
+    id: "prod7", 
+    name: "Thermal Paste", 
+    code: "TP-100",
+    category: "Electrical Components",
+    totalStock: 45,
+    unit: "PIECE",
+    reorderPoint: 20,
+    status: "Low Stock"
+  },
+  { 
+    id: "prod8", 
+    name: "Circuit Board X2", 
+    code: "CBX-002",
+    category: "Electrical Components",
+    totalStock: 0,
+    unit: "PIECE",
+    reorderPoint: 15,
+    status: "Out of Stock"
+  },
+];
+
+// Filter options
+const categoryFilters = [
+  "All Categories",
+  "Raw Materials",
+  "Finished Goods",
+  "Packaging Materials",
+  "Electrical Components",
+  "Mechanical Parts",
+];
+
+const statusFilters = [
+  "All Statuses",
+  "Active",
+  "Inactive",
+  "Low Stock",
+  "Out of Stock",
+];
 
 export default function ProductsPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Dummy data for products
-  const [products, setProducts] = useState<Product[]>([
-    { 
-      id: "1", 
-      name: "Steel Bolts (10mm)", 
-      code: "SB-10MM",
-      description: "10mm diameter steel bolts",
-      categoryId: "4",
-      categoryName: "Steel Bolts",
-      unit: "PIECE",
-      hsnCode: "7318",
-      stockLevel: 5200,
-      reorderPoint: 1000
-    },
-    { 
-      id: "2", 
-      name: "Aluminum Sheet (2mm)", 
-      code: "AL-S2MM",
-      description: "2mm thick aluminum sheets",
-      categoryId: "5",
-      categoryName: "Aluminum Sheets",
-      unit: "PIECE",
-      hsnCode: "7606",
-      stockLevel: 157,
-      reorderPoint: 50
-    },
-    { 
-      id: "3", 
-      name: "Plastic Housing Type B", 
-      code: "PH-TYPB",
-      description: "Plastic housing for electronic components",
-      categoryId: "3",
-      categoryName: "Casings",
-      unit: "PIECE",
-      stockLevel: 352,
-      reorderPoint: 100
-    },
-    { 
-      id: "4", 
-      name: "Copper Wire (1.5mm)", 
-      code: "CW-1.5MM",
-      description: "1.5mm diameter copper wire",
-      categoryId: "1",
-      categoryName: "Raw Materials",
-      unit: "METER",
-      hsnCode: "7408",
-      stockLevel: 1500,
-      reorderPoint: 300
-    },
-  ]);
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedStatus, setSelectedStatus] = useState("All Statuses");
+  const [sortField, setSortField] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
+  const [actionProductId, setActionProductId] = useState<string | null>(null);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
+  // Filter and sort products
+  const filteredProducts = mockProducts
+    .filter((product) => {
+      // Search filter
+      const matchesSearch =
+        searchQuery === "" ||
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.code.toLowerCase().includes(searchQuery.toLowerCase());
 
-  // Filter products based on search term
-  const filteredProducts = products.filter((product) => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.hsnCode && product.hsnCode.includes(searchTerm))
-  );
+      // Category filter
+      const matchesCategory =
+        selectedCategory === "All Categories" || product.category === selectedCategory;
 
-  // Check if stock level is low (below reorder point)
-  const isLowStock = (product: Product) => {
-    if (product.reorderPoint && product.stockLevel < product.reorderPoint) {
-      return true;
+      // Status filter
+      const matchesStatus =
+        selectedStatus === "All Statuses" || product.status === selectedStatus;
+
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Sort by selected field
+      if (sortField === "totalStock") {
+        return sortDirection === "asc" 
+          ? a.totalStock - b.totalStock 
+          : b.totalStock - a.totalStock;
+      } else {
+        // Sort alphabetically for other fields (name, code, etc.)
+        const valueA = (a[sortField] as string).toLowerCase();
+        const valueB = (b[sortField] as string).toLowerCase();
+        return sortDirection === "asc"
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      }
+    });
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      // Toggle sort direction if clicking the same field
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new sort field and reset direction to ascending
+      setSortField(field);
+      setSortDirection("asc");
     }
-    return false;
   };
 
-  // Format unit for display
-  const formatUnit = (unit: string) => {
-    return unit.replace("_", " ").toLowerCase();
+  const renderSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown size={14} />;
+    return sortDirection === "asc" ? (
+      <ArrowUpDown size={14} className="text-primary" />
+    ) : (
+      <ArrowUpDown size={14} className="text-primary rotate-180" />
+    );
+  };
+
+  const handleActionClick = (productId: string) => {
+    setActionProductId(actionProductId === productId ? null : productId);
+  };
+
+  const handleDelete = (productId: string) => {
+    // Mock delete functionality
+    console.log(`Delete product with ID: ${productId}`);
+    setActionProductId(null);
+    // Actual implementation would send a DELETE request to the API
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Products</h2>
-        <div className="flex items-center gap-2">
-          <Link 
-            href="/inventory/products/bom" 
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background px-4 py-2 shadow-sm hover:bg-accent"
-          >
-            <Clipboard size={16} className="mr-2" />
-            BOM
-          </Link>
-          <Link 
-            href="/inventory/products/new" 
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-10 py-2 px-4 hover:bg-primary/90"
-          >
-            <Plus size={16} className="mr-2" />
-            Add Product
-          </Link>
-        </div>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
-        <div className="relative w-full sm:w-96">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Search products..."
-            className="w-full rounded-md border border-input bg-background pl-8 p-2 text-sm shadow-sm outline-none focus:border-primary"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm">
-            <Filter size={16} className="mr-2" />
-            Filter
-          </button>
-          <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm">
-            <FileDown size={16} className="mr-2" />
-            Export
-          </button>
-          <Link href="/inventory/categories" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm">
-            <FolderTree size={16} className="mr-2" />
-            Categories
-          </Link>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <p className="text-sm font-medium text-muted-foreground">Total Products</p>
-          <p className="text-2xl font-bold">{products.length}</p>
-        </div>
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <p className="text-sm font-medium text-muted-foreground">Low Stock Items</p>
-          <p className="text-2xl font-bold">{products.filter(p => isLowStock(p)).length}</p>
-        </div>
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <p className="text-sm font-medium text-muted-foreground">Categories</p>
-          <p className="text-2xl font-bold">5</p>
-        </div>
-        <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
-          <p className="text-sm font-medium text-muted-foreground">Total Stock Value</p>
-          <p className="text-2xl font-bold">₹875,400</p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading products...</p>
-          </div>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border flex flex-col items-center justify-center text-center h-64">
-          <AlertCircle size={40} className="text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No products found</h3>
-          <p className="text-muted-foreground mb-4 max-w-md">Start by adding products to your inventory.</p>
-          <div className="flex gap-3">
-            <Link 
-              href="/inventory/products/new"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-10 py-2 px-4 hover:bg-primary/90"
+    <div className="flex min-h-screen flex-col">
+      <main className="flex-1 container mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold">Products</h1>
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <input
+                type="search"
+                placeholder="Search products..."
+                className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={() => router.push("/inventory/products/new")}
+              className="flex gap-1"
             >
-              <Plus size={16} className="mr-2" />
+              <Plus size={16} />
               Add Product
-            </Link>
-            <Link 
-              href="/inventory/categories/new"
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background px-4 py-2 shadow-sm hover:bg-accent"
-            >
-              <FolderTree size={16} className="mr-2" />
-              Add Category
-            </Link>
+            </Button>
           </div>
         </div>
-      ) : (
-        <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Filter size={16} />
+                Filters
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedCategory("All Categories");
+                  setSelectedStatus("All Statuses");
+                  setSearchQuery("");
+                }}
+              >
+                Reset
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Category Filter */}
+            <div>
+              <label htmlFor="categoryFilter" className="text-sm font-medium block mb-1">
+                Category
+              </label>
+              <select
+                id="categoryFilter"
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                {categoryFilters.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Status Filter */}
+            <div>
+              <label htmlFor="statusFilter" className="text-sm font-medium block mb-1">
+                Status
+              </label>
+              <select
+                id="statusFilter"
+                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                {statusFilters.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Import/Export Buttons */}
+            <div className="flex items-end gap-2 justify-end">
+              <Button variant="outline" size="sm" className="flex gap-1">
+                <FileUp size={14} />
+                Import
+              </Button>
+              <Button variant="outline" size="sm" className="flex gap-1">
+                <FileDown size={14} />
+                Export
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Products Table */}
+        <div className="rounded-md border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead>
-                <tr className="bg-muted/50">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Product
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+              <thead className="bg-muted/50">
+                <tr className="border-b">
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("name")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Product Name
+                      {renderSortIcon("name")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Code
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("code")}
+                  >
+                    <div className="flex items-center gap-1">
+                      SKU/Code
+                      {renderSortIcon("code")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("category")}
+                  >
+                    <div className="flex items-center gap-1">
                       Category
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                      {renderSortIcon("category")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Stock Level
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("totalStock")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Stock
+                      {renderSortIcon("totalStock")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      Unit
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
+                  >
+                    Unit
+                  </th>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
+                  >
+                    Reorder Point
+                  </th>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
+                    onClick={() => handleSort("status")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Status
+                      {renderSortIcon("status")}
                     </div>
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">
-                    <div className="flex items-center">
-                      HSN Code
-                      <button className="ml-1">
-                        <ArrowUpDown size={14} />
-                      </button>
-                    </div>
-                  </th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">
+                  <th className="py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="border-t border-border hover:bg-muted/50">
-                    <td className="p-4 text-sm">
-                      <div className="flex items-center">
-                        <Package size={16} className="mr-2 text-muted-foreground" />
-                        <Link 
-                          href={`/inventory/products/${product.id}`} 
-                          className="font-medium text-foreground hover:underline"
+                {filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center">
+                        <Package size={40} className="mb-2 text-muted-foreground" />
+                        <p>No products found</p>
+                        <Button
+                          variant="link"
+                          onClick={() => router.push("/inventory/products/new")}
+                          className="mt-2"
                         >
-                          {product.name}
-                        </Link>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{product.description}</p>
-                    </td>
-                    <td className="p-4 text-sm">{product.code}</td>
-                    <td className="p-4 text-sm">
-                      <Link 
-                        href={`/inventory/categories/${product.categoryId}`}
-                        className="text-muted-foreground hover:text-foreground hover:underline flex items-center"
-                      >
-                        <FolderTree size={14} className="mr-1" />
-                        {product.categoryName}
-                      </Link>
-                    </td>
-                    <td className="p-4 text-sm">
-                      <div className="flex items-center">
-                        <span className={`font-medium ${
-                          isLowStock(product)
-                            ? "text-red-500 dark:text-red-400"
-                            : ""
-                        }`}>
-                          {product.stockLevel} {formatUnit(product.unit)}
-                        </span>
-                        {isLowStock(product) && (
-                          <span className="ml-2 px-1.5 py-0.5 text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 rounded">
-                            Low Stock
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm capitalize">{formatUnit(product.unit)}</td>
-                    <td className="p-4 text-sm">
-                      {product.hsnCode ? (
-                        <Link 
-                          href={`/settings/tax-rates?hsnCode=${product.hsnCode}`}
-                          className="flex items-center text-muted-foreground hover:text-foreground"
-                        >
-                          <Tag size={14} className="mr-1" />
-                          {product.hsnCode}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-sm text-right">
-                      <div className="flex justify-end">
-                        <Link 
-                          href={`/inventory/products/${product.id}/edit`} 
-                          className="text-muted-foreground hover:text-foreground mr-4"
-                        >
-                          Edit
-                        </Link>
-                        <button className="text-muted-foreground hover:text-foreground">
-                          <MoreHorizontal size={16} />
-                        </button>
+                          Add your first product
+                        </Button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredProducts.map((product) => (
+                    <tr key={product.id} className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4">
+                        <div className="font-medium">{product.name}</div>
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        {product.code}
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        {product.category}
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        <div className={
+                          product.totalStock === 0
+                            ? "text-destructive font-medium"
+                            : product.totalStock < product.reorderPoint
+                            ? "text-amber-500 font-medium"
+                            : ""
+                        }>
+                          {product.totalStock.toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        {product.unit === "PIECE" ? "Piece" : product.unit}
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        {product.reorderPoint.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
+                          ${product.status === "Active" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : ""}
+                          ${product.status === "Inactive" ? "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400" : ""}
+                          ${product.status === "Low Stock" ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" : ""}
+                          ${product.status === "Out of Stock" ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" : ""}
+                        `}>
+                          {product.status}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right relative">
+                        <div className="flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleActionClick(product.id)}
+                          >
+                            <MoreHorizontal size={16} />
+                          </Button>
+                          {actionProductId === product.id && (
+                            <div className="absolute right-4 top-10 z-50 rounded-md border border-border bg-card shadow-md w-36">
+                              <div className="p-1">
+                                <button
+                                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent text-left"
+                                  onClick={() => router.push(`/inventory/products/${product.id}`)}
+                                >
+                                  <Edit size={14} />
+                                  Edit
+                                </button>
+                                <button
+                                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent text-left text-destructive hover:text-destructive"
+                                  onClick={() => handleDelete(product.id)}
+                                >
+                                  <Trash size={14} />
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-            <p className="text-sm text-muted-foreground">
-              Showing <strong>{filteredProducts.length}</strong> of{" "}
-              <strong>{products.length}</strong> products
-            </p>
-            <div className="flex items-center gap-2">
-              <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm" disabled>
+          
+          {/* Simple Pagination */}
+          <div className="flex items-center justify-between px-4 py-3 border-t">
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredProducts.length} of {mockProducts.length} products
+            </div>
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" disabled>
                 Previous
-              </button>
-              <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm" disabled>
+              </Button>
+              <Button variant="outline" size="sm" disabled>
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </div>
-      )}
+      </main>
     </div>
   );
 }
