@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card } from "@/components/ui/card";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -78,7 +79,7 @@ export default function LoginPage() {
         )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+          <Card className="rounded-md shadow-sm space-y-4 p-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                 Email address
@@ -111,7 +112,7 @@ export default function LoginPage() {
                 placeholder="Password"
               />
             </div>
-          </div>
+          </Card>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center">

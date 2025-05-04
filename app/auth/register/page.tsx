@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -34,8 +35,8 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed");
       }
 
-      // Successful registration, redirect to dashboard
-      router.push("/dashboard");
+      // Successful registration, redirect to onboarding instead of dashboard
+      router.push("/onboarding");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -79,7 +80,7 @@ export default function RegisterPage() {
         )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+          <Card className="rounded-md shadow-sm space-y-4 p-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
                 Full name
@@ -129,7 +130,7 @@ export default function RegisterPage() {
                 minLength={6}
               />
             </div>
-          </div>
+          </Card>
 
           <div>
             <p className="text-xs text-muted-foreground mt-2">
