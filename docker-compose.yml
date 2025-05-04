@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  app:
+    container_name: factostack-inventory
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      # Add other environment variables your application needs
+    networks:
+      - factostack-network
+    depends_on:
+      - db
+
+  db:
+    container_name: factostack-db
+    image: postgres:15-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-factostack}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - factostack-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  factostack-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
