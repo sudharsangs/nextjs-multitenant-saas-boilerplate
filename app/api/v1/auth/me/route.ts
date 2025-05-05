@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users } from '@/db/schema';
+import { companies, subscriptions, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getToken } from '@/lib/cookies';
 import { verifyJwt } from '@/lib/jwt';
@@ -54,7 +54,35 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ user });
+    // Fetch company and subscription details
+    let companyDetails = null;
+    let subscriptionDetails = null;
+    
+    if (user.companyId) {
+      const [company] = await db
+        .select()
+        .from(companies) 
+        .where(eq(companies.id, user.companyId))
+        .limit(1);
+      
+      companyDetails = company;
+      
+      if (company) {
+        // Get the latest active subscription for the company
+        const [subscription] = await db
+          .select()
+          .from(subscriptions) // Assuming there's a subscriptions table
+          .where(eq(subscriptions.companyId, company.id))
+          
+        subscriptionDetails = subscription;
+      }
+    }
+
+    return NextResponse.json({ 
+      user,
+      company: companyDetails,
+      subscription: subscriptionDetails
+    });
   } catch (err) {
     console.error('Error in GET auth/me:', err);
     return NextResponse.json(

@@ -4,6 +4,13 @@ export enum LocationTypeEnum {
     STORE = 'STORE',
 }
 
+export enum SubscriptionTierEnum {
+    FREE = "FREE",
+    BASIC = "BASIC",
+    STANDARD = "PRO",
+    PREMIUM = "ENTERPRISE"
+}
+
 export enum InventoryStatusEnum {
     AVAILABLE = 'AVAILABLE',
     RESERVED = 'RESERVED',

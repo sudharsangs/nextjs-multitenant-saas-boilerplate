@@ -1,16 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
-import { 
-  companies, 
-  users, 
-  subscriptions, 
-  locations, 
-  products, 
-  inventory 
+import {
+  companies,
+  users,
+  locations,
+  products,
+  inventory,
+  subscriptions
 } from '@/db/schema';
 import { eq, and, count, sql } from 'drizzle-orm';
 import { getToken } from '@/lib/cookies';
+import { getAuthUser } from '@/lib/auth';
 
 // Schema validation for company updates
 const companyUpdateSchema = z.object({
@@ -31,18 +32,50 @@ const companyUpdateSchema = z.object({
 });
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const { userId } = getAuthUser(request);
+    // Special case: if id is "current", get the company for the current user
+    if (params.id === "current") {
+      const [userCompany] = await db
+        .select({
+          id: companies.id,
+          name: companies.name,
+          gstin: companies.gstin,
+          address: companies.address,
+          city: companies.city,
+          state: companies.state,
+          country: companies.country,
+          pincode: companies.pincode,
+          phone: companies.phone,
+          email: companies.email,
+          website: companies.website,
+          billingAddress: companies.billingAddress,
+          logo: companies.logo,
+          theme: companies.theme,
+          settings: companies.settings,
+          createdAt: companies.createdAt,
+          updatedAt: companies.updatedAt,
+          isActive: companies.isActive
+        })
+        .from(users)
+        .leftJoin(companies, eq(users.companyId, companies.id))
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!userCompany || !userCompany.id) {
+        return NextResponse.json(
+          { error: 'No company found for current user' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(userCompany);
     }
 
+    // Regular case: get company by ID
     const companyId = params.id;
 
     // Get company details
@@ -158,7 +191,7 @@ export async function DELETE(
     // Soft delete company by setting isActive to false
     await db
       .update(companies)
-      .set({ 
+      .set({
         isActive: false,
         updatedAt: new Date()
       })
@@ -364,7 +397,7 @@ export async function GET_STATS(
         eq(inventory.companyId, companyId),
         eq(inventory.isActive, true)
       ));
-    
+
     const totalInventoryQuantity = inventorySumResult[0]?.totalQuantity ?? 0;
 
     const stats = {

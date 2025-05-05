@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { SidebarItem } from "./sidebar-item";
-import { SidebarItemType, filterSidebarItemsByRole } from "@/lib/sidebar";
-import { UserRoleEnum } from "@/lib/types";
+import { SidebarItemType, filterSidebarItemsByRoleAndSubscription } from "@/lib/sidebar";
+import { UserRoleEnum, SubscriptionTierEnum } from "@/lib/types";
 import { ChevronLeft, MenuIcon } from "lucide-react";
 
 interface SidebarProps {
     items: SidebarItemType[];
     userRole?: UserRoleEnum;
+    subscriptionTier?: SubscriptionTierEnum;
     defaultCollapsed?: boolean;
     collapsed: boolean;
     setCollapsed: (collapsed: boolean) => void;
@@ -17,6 +18,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
     items,
     userRole,
+    subscriptionTier,
     defaultCollapsed = false,
     collapsed,
     setCollapsed,
@@ -25,7 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const [isOpen, setIsOpen] = useState(false);
 
     // Filter sidebar items based on user role
-    const filteredItems = filterSidebarItemsByRole(items, userRole);
+    const filteredItems = filterSidebarItemsByRoleAndSubscription(items, userRole, subscriptionTier);
 
     // Handle responsive behavior
     useEffect(() => {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
-import { companies, subscriptions } from '@/db/schema';
+import { companies, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getAuthUser } from '@/lib/auth';
 import type { NextRequest } from 'next/server';
@@ -21,12 +21,6 @@ const companySchema = z.object({
   logo: z.string().optional(),
   theme: z.string().optional(),
   settings: z.record(z.any()).optional(),
-});
-
-const subscriptionSchema = z.object({
-  plan: z.enum(['FREE', 'BASIC', 'PRO', 'ENTERPRISE']),
-  paymentMethod: z.string(),
-  isAutoRenew: z.boolean(),
 });
 
 export async function GET(request: NextRequest) {
@@ -69,9 +63,29 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    getAuthUser(request); // Just verify authentication
+    const { userId } = getAuthUser(request);
     const body = await request.json();
     const companyData = companySchema.parse(body);
+
+    // Check if a company with the same identifiers already exists
+    const existingCompany = await db
+      .select({ id: companies.id })
+      .from(companies)
+      .where(
+        eq(companies.phone, companyData.phone) ||
+        eq(companies.email, companyData.email) ||
+        (companyData.gstin ? eq(companies.gstin, companyData.gstin) : undefined)
+      )
+      .limit(1);
+
+    if (existingCompany.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'Company with the same phone, email, or GST number already exists',
+        },
+        { status: 409 }
+      );
+    }
 
     const [company] = await db
       .insert(companies)
@@ -80,6 +94,12 @@ export async function POST(request: NextRequest) {
         isActive: true,
       })
       .returning();
+
+    // Update the user's companyId
+    await db
+      .update(users)
+      .set({ companyId: company.id })
+      .where(eq(users.id, userId));
 
     return NextResponse.json(company);
   } catch (err) {
@@ -156,148 +176,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ message: 'Company deleted successfully' });
   } catch (err) {
     console.error('Error in DELETE companies:', err);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-// Subscription Management
-export async function GET_SUBSCRIPTION(request: NextRequest) {
-  try {
-    getAuthUser(request); // Just verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
-
-    if (!requestedCompanyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const [subscription] = await db
-      .select()
-      .from(subscriptions)
-      .where(eq(subscriptions.companyId, requestedCompanyId))
-      .limit(1);
-
-    return NextResponse.json(subscription);
-  } catch (err) {
-    console.error('Error in GET subscription:', err);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST_SUBSCRIPTION(request: NextRequest) {
-  try {
-    getAuthUser(request); // Just verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
-
-    if (!requestedCompanyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const body = await request.json();
-    const subscriptionData = subscriptionSchema.parse(body);
-
-    const [subscription] = await db
-      .insert(subscriptions)
-      .values({
-        companyId: requestedCompanyId,
-        ...subscriptionData,
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        maxUsers: 5, // Default value
-        maxStorage: 1024, // Default value in MB
-        features: ['basic'], // Default features
-        isActive: true,
-      })
-      .returning();
-
-    return NextResponse.json(subscription);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: err.errors },
-        { status: 400 }
-      );
-    }
-    console.error('Error in POST subscription:', err);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT_SUBSCRIPTION(request: NextRequest) {
-  try {
-    getAuthUser(request); // Just verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
-
-    if (!requestedCompanyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const body = await request.json();
-    const subscriptionData = subscriptionSchema.parse(body);
-
-    const [subscription] = await db
-      .update(subscriptions)
-      .set(subscriptionData)
-      .where(eq(subscriptions.companyId, requestedCompanyId))
-      .returning();
-
-    return NextResponse.json(subscription);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: err.errors },
-        { status: 400 }
-      );
-    }
-    console.error('Error in PUT subscription:', err);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE_SUBSCRIPTION(request: NextRequest) {
-  try {
-    getAuthUser(request); // Just verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
-
-    if (!requestedCompanyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required' },
-        { status: 400 }
-      );
-    }
-
-    await db
-      .update(subscriptions)
-      .set({ isActive: false })
-      .where(eq(subscriptions.companyId, requestedCompanyId));
-
-    return NextResponse.json({ message: 'Subscription deleted successfully' });
-  } catch (err) {
-    console.error('Error in DELETE subscription:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

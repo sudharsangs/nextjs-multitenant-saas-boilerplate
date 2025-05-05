@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { SIDEBAR_ITEMS } from "@/components/sidebar/sidebar-config";
-import { UserRoleEnum } from "@/lib/types";
+import { UserRoleEnum, SubscriptionTierEnum } from "@/lib/types";
 import { Header } from "@/components/shared/header";
 
 export default function ProtectedLayout({
@@ -12,6 +12,7 @@ export default function ProtectedLayout({
     children: React.ReactNode;
 }>) {
     const [userRole, setUserRole] = useState<UserRoleEnum | undefined>(undefined);
+    const [subscriptionTier,setSubscriptionTier] = useState<SubscriptionTierEnum | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [collapsed, setCollapsed] = useState(false);
 
@@ -26,6 +27,7 @@ export default function ProtectedLayout({
                 if (response.ok) {
                     const data = await response.json();
                     setUserRole(data.user?.role as UserRoleEnum);
+                    setSubscriptionTier(data.subscription?.plan as SubscriptionTierEnum)
                 } else {
                     // Default to viewer if there's an error
                     setUserRole(UserRoleEnum.ADMIN);
@@ -38,6 +40,7 @@ export default function ProtectedLayout({
                 setLoading(false);
             }
         };
+
 
         fetchUserData();
     }, []);
@@ -58,6 +61,7 @@ export default function ProtectedLayout({
                 userRole={userRole}
                 collapsed={collapsed}
                 setCollapsed={setCollapsed}
+                subscriptionTier={subscriptionTier}
             />
 
             {/* Main content */}

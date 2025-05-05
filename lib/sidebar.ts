@@ -1,4 +1,4 @@
-import { UserRoleEnum } from "./types";
+import {  UserRoleEnum,SubscriptionTierEnum } from "./types";
 
 export type SidebarItemType = {
   title: string;
@@ -7,6 +7,7 @@ export type SidebarItemType = {
   roles?: UserRoleEnum[]; // If undefined, visible to all roles
   children?: Omit<SidebarItemType, 'children'>[]; // Nested items (for dropdowns)
   badge?: string | number; // Optional badge display (notifications, counts)
+  subscriptions: SubscriptionTierEnum[];
 };
 
 // Collection of sidebar configurations
@@ -21,26 +22,31 @@ export interface SidebarState {
 }
 
 // Function to filter sidebar items based on user role
-export const filterSidebarItemsByRole = (
+export const filterSidebarItemsByRoleAndSubscription = (
   items: SidebarItemType[], 
-  userRole?: UserRoleEnum
+  userRole?: UserRoleEnum,
+  subscriptionTier?: SubscriptionTierEnum
 ): SidebarItemType[] => {
   if (!userRole) return items;
 
   return items.filter(item => {
     // If no roles specified, show to everyone
-    if (!item.roles || item.roles.length === 0) {
-      return true;
-    }
+    const roleMatch = !item.roles || item.roles.length === 0 || item.roles.includes(userRole);
     
-    // Check if user role matches allowed roles
-    return item.roles.includes(userRole);
+    // Check if subscription tier allows access to this item
+    const subscriptionMatch = !subscriptionTier || 
+      !item.subscriptions || 
+      item.subscriptions.length === 0 || 
+      item.subscriptions.includes(subscriptionTier);
+    
+    // Item is visible only if both role and subscription conditions are met
+    return roleMatch && subscriptionMatch;
   }).map(item => {
     // Also filter children if present
     if (item.children && item.children.length > 0) {
       return {
         ...item,
-        children: filterSidebarItemsByRole(item.children, userRole),
+        children: filterSidebarItemsByRoleAndSubscription(item.children, userRole, subscriptionTier),
       };
     }
     return item;
