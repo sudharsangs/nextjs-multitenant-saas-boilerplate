@@ -12,8 +12,7 @@ import {
   FileDown,
   Printer,
   Receipt,
-  Clock
-} from "lucide-react";
+  AlertCircle} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -76,8 +75,16 @@ export default function InvoicesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
-  const [sortField, setSortField] = useState<string | null>("date");
+  const [sortField, setSortField] = useState<keyof typeof mockInvoices[0] | null>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState<{
+    title: string;
+    message: string;
+    type: 'success' | 'warning' | 'info';
+  } | null>(null);
+  const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
+  const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   
   // Status filters
   const statusFilters = ["ALL", "PENDING", "PAID", "OVERDUE", "CANCELLED"];
@@ -111,7 +118,7 @@ export default function InvoicesPage() {
       return sortDirection === "asc" ? comparison : -comparison;
     });
 
-  const handleSort = (field: string) => {
+  const handleSort = (field: keyof typeof mockInvoices[0]) => {
     // If clicking the same field, toggle direction
     if (field === sortField) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -122,7 +129,7 @@ export default function InvoicesPage() {
     }
   };
 
-  const renderSortIcon = (field: string) => {
+  const renderSortIcon = (field: keyof typeof mockInvoices[0]) => {
     if (sortField !== field) return <ArrowUpDown size={14} className="opacity-50" />;
     return sortDirection === "asc" ? 
       <ArrowUpDown size={14} className="text-primary" /> : 
@@ -145,6 +152,53 @@ export default function InvoicesPage() {
       month: 'short', 
       day: 'numeric'
     });
+  };
+
+  const handleExport = () => {
+    setModalContent({
+      title: "Demo Mode",
+      message: "In a real application, this would export the invoices to a CSV or Excel file.",
+      type: "info"
+    });
+    setShowModal(true);
+  };
+
+  const handlePrint = (invoiceId: string) => {
+    const invoice = mockInvoices.find(i => i.id === invoiceId);
+    
+    setModalContent({
+      title: "Demo Mode",
+      message: `In a real application, this would generate and print a PDF for invoice ${invoice?.invoiceNumber}.`,
+      type: "info"
+    });
+    setShowModal(true);
+  };
+
+  const handleMoreActions = (invoiceId: string) => {
+    if (showActionMenu === invoiceId) {
+      setShowActionMenu(null);
+    } else {
+      setShowActionMenu(invoiceId);
+      setActiveInvoiceId(invoiceId);
+    }
+  };
+
+  const handleActionClick = (action: string) => {
+    const invoice = mockInvoices.find(i => i.id === activeInvoiceId);
+    
+    setModalContent({
+      title: "Demo Mode",
+      message: `In a real application, this would ${action} the invoice ${invoice?.invoiceNumber}.`,
+      type: "info"
+    });
+    setShowModal(true);
+    setShowActionMenu(null);
+  };
+
+  // Close modal handler
+  const closeModal = () => {
+    setShowModal(false);
+    setModalContent(null);
   };
 
   return (
@@ -205,7 +259,12 @@ export default function InvoicesPage() {
 
           {/* Export Buttons */}
           <div className="flex items-end gap-2 justify-end">
-            <Button variant="outline" size="sm" className="flex gap-1">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex gap-1"
+              onClick={handleExport}
+            >
               <FileDown size={14} />
               Export
             </Button>
@@ -309,13 +368,54 @@ export default function InvoicesPage() {
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8"
-                          onClick={() => window.open(`/api/v1/invoices/${invoice.id}/pdf`, '_blank')}
+                          onClick={() => handlePrint(invoice.id)}
                         >
                           <Printer className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        <div className="relative">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleMoreActions(invoice.id)}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                          {showActionMenu === invoice.id && (
+                            <div className="absolute right-0 mt-1 w-44 bg-background border border-border rounded-md shadow-md z-10">
+                              <div className="py-1">
+                                <button
+                                  className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                                  onClick={() => handleActionClick("download")}
+                                >
+                                  Download PDF
+                                </button>
+                                <button
+                                  className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                                  onClick={() => handleActionClick("email")}
+                                >
+                                  Email to Customer
+                                </button>
+                                {invoice.status === "PENDING" && (
+                                  <button
+                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-muted text-green-600"
+                                    onClick={() => handleActionClick("mark as paid")}
+                                  >
+                                    Mark as Paid
+                                  </button>
+                                )}
+                                {invoice.status === "PENDING" && (
+                                  <button
+                                    className="block w-full text-left px-4 py-2 text-sm hover:bg-muted text-red-600"
+                                    onClick={() => handleActionClick("cancel")}
+                                  >
+                                    Cancel Invoice
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -339,6 +439,31 @@ export default function InvoicesPage() {
                 <Plus size={16} />
                 Create Invoice
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Demo Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-lg p-6 max-w-md w-full shadow-lg">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertCircle className={
+                modalContent?.type === 'warning' ? 'text-amber-500' : 
+                modalContent?.type === 'success' ? 'text-green-500' : 
+                'text-blue-500'
+              } />
+              <h3 className="text-lg font-medium">{modalContent?.title}</h3>
+            </div>
+            <p className="mb-6">{modalContent?.message}</p>
+            <div className="flex justify-end">
+              <button
+                className="bg-primary text-primary-foreground px-4 py-2 rounded-md"
+                onClick={closeModal}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

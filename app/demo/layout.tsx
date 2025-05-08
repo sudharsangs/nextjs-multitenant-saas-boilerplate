@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Sidebar } from "@/components/sidebar/sidebar";
-import { SIDEBAR_ITEMS } from "@/components/sidebar/sidebar-config";
+import { SIDEBAR_ITEMS } from "@/components/sidebar/demo-sidebar-config";
 import { UserRoleEnum, SubscriptionTierEnum } from "@/lib/types";
 import { Header } from "@/components/shared/header";
 
