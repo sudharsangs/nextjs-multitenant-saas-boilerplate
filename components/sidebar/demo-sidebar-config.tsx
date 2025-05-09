@@ -14,10 +14,16 @@ import {
   Settings,
   Users,
   Building,
-  Receipt,
+  ReceiptIndianRupee,
   Tag,
   BoxesIcon,
-  BarChart3
+  BarChart3,
+  SendToBack,
+  ListCheck,
+  Target,
+  BadgeIndianRupee,
+  TicketPercent,
+  Landmark
 } from "lucide-react";
 
 
@@ -82,14 +88,14 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
       {
         title: "Production Orders",
         href: "/demo/manufacturing/production-orders",
-        icon: <ClipboardList />,
+        icon: <Target />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       },
       {
         title: "Quality Checks",
         href: "/demo/manufacturing/quality-checks",
-        icon: <ClipboardList />,
+        icon: <ListCheck />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.PREMIUM],
       }
@@ -105,7 +111,7 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
       {
         title: "Purchase Orders",
         href: "/demo/purchases/orders",
-        icon: <ClipboardList />,
+        icon: <SendToBack />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       },
@@ -142,7 +148,7 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
       {
         title: "Invoices",
         href: "/demo/sales/invoices",
-        icon: <Receipt />,
+        icon: <ReceiptIndianRupee />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       }
@@ -172,21 +178,21 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
       {
         title: "Sales Reports",
         href: "/demo/reports/sales",
-        icon: <BarChart3 />,
+        icon: <BadgeIndianRupee />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       },
       {
         title: "Purchase Reports",
         href: "/demo/reports/purchases",
-        icon: <BarChart3 />,
+        icon: <TicketPercent />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.PREMIUM],
       },
       {
         title: "Tax Reports",
         href: "/demo/reports/tax",
-        icon: <BarChart3 />,
+        icon: <Landmark />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.PREMIUM],
       },

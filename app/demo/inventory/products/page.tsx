@@ -14,18 +14,29 @@ import {
   FileUp,
   Package
 } from "lucide-react";
-import { Header } from "@/components/shared/header";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
   CardHeader, 
   CardTitle, 
-  CardDescription, 
   CardContent
 } from "@/components/ui/card";
 
+// Define product type
+type Product = {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  totalStock: number;
+  unit: string;
+  reorderPoint: number;
+  status: string;
+  [key: string]: string | number; // Index signature for string keys
+};
+
 // Mock products data
-const mockProducts = [
+const mockProducts: Product[] = [
   { 
     id: "prod1", 
     name: "Steel Bolts (10mm)", 
@@ -118,12 +129,13 @@ const categoryFilters = [
   "Mechanical Parts",
 ];
 
+// Status filter options
 const statusFilters = [
   "All Statuses",
   "Active",
   "Inactive",
   "Low Stock",
-  "Out of Stock",
+  "Out of Stock"
 ];
 
 export default function ProductsPage() {
@@ -131,7 +143,7 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
-  const [sortField, setSortField] = useState("name");
+  const [sortField, setSortField] = useState<keyof Product>("name");
   const [sortDirection, setSortDirection] = useState("asc");
   const [actionProductId, setActionProductId] = useState<string | null>(null);
 
@@ -147,7 +159,7 @@ export default function ProductsPage() {
       // Category filter
       const matchesCategory =
         selectedCategory === "All Categories" || product.category === selectedCategory;
-
+        
       // Status filter
       const matchesStatus =
         selectedStatus === "All Statuses" || product.status === selectedStatus;
@@ -157,20 +169,20 @@ export default function ProductsPage() {
     .sort((a, b) => {
       // Sort by selected field
       if (sortField === "totalStock") {
-        return sortDirection === "asc" 
+        return sortDirection === "asc"
           ? a.totalStock - b.totalStock 
           : b.totalStock - a.totalStock;
       } else {
         // Sort alphabetically for other fields (name, code, etc.)
-        const valueA = (a[sortField] as string).toLowerCase();
-        const valueB = (b[sortField] as string).toLowerCase();
+        const valueA = String(a[sortField]).toLowerCase();
+        const valueB = String(b[sortField]).toLowerCase();
         return sortDirection === "asc"
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
     });
 
-  const handleSort = (field: string) => {
+  const handleSort = (field: keyof Product) => {
     if (sortField === field) {
       // Toggle sort direction if clicking the same field
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");

@@ -10,8 +10,23 @@ import {
   UsersIcon,
   AlertCircle,
   MoreHorizontal,
-  Plus
+  Plus,
 } from "lucide-react";
+import {
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from "recharts";
 import Link from "next/link";
 
 // Type definitions
@@ -226,7 +241,70 @@ const LowStockAlerts = ({ alerts }: LowStockAlertsProps) => {
   );
 };
 
+// Mock data for dashboard statistics
+const mockStats = {
+  inventoryValue: 345780.50,
+  lowStockItems: 8,
+  pendingOrders: 12,
+  pendingShipments: 7,
+  thisMonthRevenue: 78690.25,
+  lastMonthRevenue: 62450.80,
+  thisMonthPurchases: 42580.35,
+  lastMonthPurchases: 39870.20,
+  totalProducts: 143,
+  totalVendors: 28,
+  totalCustomers: 52
+};
+
+// Mock data for inventory by category
+const mockInventoryByCategory = [
+  { name: 'Electronics', value: 45 },
+  { name: 'Raw Materials', value: 32 },
+  { name: 'Packaging', value: 21 },
+  { name: 'Furniture', value: 18 },
+  { name: 'Equipment', value: 27 }
+];
+
+// Mock data for sales performance
+const mockSalesData = [
+  { month: 'Jan', revenue: 42000 },
+  { month: 'Feb', revenue: 47500 },
+  { month: 'Mar', revenue: 54200 },
+  { month: 'Apr', revenue: 62450 },
+  { month: 'May', revenue: 78690 }
+];
+
+// Mock data for top-selling products
+const mockTopSellingProducts = [
+  { name: 'Premium Office Chair', sales: 87, revenue: 17391.13 },
+  { name: 'LED Desk Lamp', sales: 135, revenue: 6176.25 },
+  { name: 'Wireless Mouse', sales: 192, revenue: 6910.08 },
+  { name: 'Ergonomic Keyboard', sales: 76, revenue: 6836.20 }
+];
+
+// Mock data for recent activities
+const mockRecentActivities = [
+  { id: 1, type: 'order', description: 'New order #SO-2025-107 from Innovative Solutions Inc', timestamp: '2025-05-09 09:35 AM' },
+  { id: 2, type: 'inventory', description: 'Low stock alert: Steel Bolts (10mm) below threshold', timestamp: '2025-05-08 04:22 PM' },
+  { id: 3, type: 'purchase', description: 'Purchase order #PO-2025-006 sent to Raw Materials Co.', timestamp: '2025-05-08 02:17 PM' },
+  { id: 4, type: 'shipment', description: 'Order #SO-2025-102 marked as shipped', timestamp: '2025-05-08 10:45 AM' },
+  { id: 5, type: 'inventory', description: 'Stock adjustment: Filing Cabinet +5 units', timestamp: '2025-05-07 03:30 PM' },
+];
+
+// Mock data for warehouse utilization
+const mockWarehouseUtilization = [
+  { location: 'Main Warehouse', utilized: 72, available: 28 },
+  { location: 'East Facility', utilized: 85, available: 15 },
+  { location: 'West Facility', utilized: 60, available: 40 }
+];
+
+// Colors for pie chart
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
 export default function Dashboard() {
+  // Calculate month-over-month changes
+  const revenueChange = ((mockStats.thisMonthRevenue - mockStats.lastMonthRevenue) / mockStats.lastMonthRevenue) * 100;
+
   // Dummy data for dashboard
   const summaryCards = [
     { 
@@ -366,6 +444,184 @@ export default function Dashboard() {
       {/* Recent Activities */}
       <div className="mt-6">
         <RecentActivitiesTable activities={recentActivities} />
+      </div>
+
+      {/* Top Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-card rounded-lg shadow p-4">
+          <div className="text-sm font-medium text-muted-foreground">
+            Inventory Value
+          </div>
+          <div className="mt-1 text-2xl font-bold">
+            ${mockStats.inventoryValue.toLocaleString()}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Total value across all warehouses
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-lg shadow p-4">
+          <div className="text-sm font-medium text-muted-foreground">
+            Revenue (This Month)
+          </div>
+          <div className="mt-1 text-2xl font-bold">
+            ${mockStats.thisMonthRevenue.toLocaleString()}
+          </div>
+          <div className={`text-xs mt-1 ${revenueChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {revenueChange >= 0 ? '+' : ''}{revenueChange.toFixed(1)}% from last month
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-lg shadow p-4">
+          <div className="text-sm font-medium text-muted-foreground">
+            Low Stock Items
+          </div>
+          <div className="mt-1 text-2xl font-bold">
+            {mockStats.lowStockItems}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Items below reorder threshold
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-lg shadow p-4">
+          <div className="text-sm font-medium text-muted-foreground">
+            Pending Orders
+          </div>
+          <div className="mt-1 text-2xl font-bold">
+            {mockStats.pendingOrders}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Orders waiting to be fulfilled
+          </div>
+        </div>
+      </div>
+      
+      {/* Sales Performance & Inventory by Category */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Sales Performance Chart */}
+        <div className="bg-card rounded-lg shadow p-4">
+          <h3 className="text-lg font-medium mb-2">Sales Performance</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={mockSalesData}
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => [`$${value.toLocaleString()}`, 'Revenue']}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#8884d8"
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        
+        {/* Inventory by Category */}
+        <div className="bg-card rounded-lg shadow p-4">
+          <h3 className="text-lg font-medium mb-2">Inventory by Category</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={mockInventoryByCategory}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {mockInventoryByCategory.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${value} products`, 'Count']} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+      
+      {/* Top Selling Products & Warehouse Utilization */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Top Selling Products */}
+        <div className="bg-card rounded-lg shadow p-4">
+          <h3 className="text-lg font-medium mb-2">Top Selling Products</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="px-4 py-2 text-left font-medium">Product</th>
+                  <th className="px-4 py-2 text-right font-medium">Units Sold</th>
+                  <th className="px-4 py-2 text-right font-medium">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockTopSellingProducts.map((product, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/50">
+                    <td className="px-4 py-2">{product.name}</td>
+                    <td className="px-4 py-2 text-right">{product.sales}</td>
+                    <td className="px-4 py-2 text-right">${product.revenue.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {/* Warehouse Utilization */}
+        <div className="bg-card rounded-lg shadow p-4">
+          <h3 className="text-lg font-medium mb-2">Warehouse Utilization</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={mockWarehouseUtilization}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" domain={[0, 100]} />
+                <YAxis type="category" dataKey="location" />
+                <Tooltip formatter={(value) => [`${value}%`, 'Utilization']} />
+                <Legend />
+                <Bar dataKey="utilized" stackId="a" fill="#8884d8" name="Utilized Space (%)" />
+                <Bar dataKey="available" stackId="a" fill="#82ca9d" name="Available Space (%)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+      
+      {/* Recent Activities */}
+      <div className="bg-card rounded-lg shadow p-4">
+        <h3 className="text-lg font-medium mb-2">Recent Activities</h3>
+        <div className="flow-root">
+          <ul className="space-y-4">
+            {mockRecentActivities.map((activity) => (
+              <li key={activity.id} className="py-2 border-b last:border-0">
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-sm">{activity.description}</p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {activity.timestamp}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

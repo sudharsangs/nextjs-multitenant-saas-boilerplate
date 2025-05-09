@@ -207,7 +207,7 @@ export default function InvoicesPage() {
         <h1 className="text-2xl font-semibold">Invoices</h1>
         <Button
           className="flex items-center gap-1"
-          onClick={() => router.push("/sales/invoices/new")}
+          onClick={() => router.push("/demo/sales/invoices/new")}
         >
           <Plus size={16} />
           Create Invoice
@@ -360,7 +360,7 @@ export default function InvoicesPage() {
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8"
-                          onClick={() => router.push(`/sales/invoices/${invoice.id}`)}
+                          onClick={() => router.push(`/demo/sales/invoices/${invoice.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -433,7 +433,7 @@ export default function InvoicesPage() {
               <h3 className="text-lg font-medium mb-2">No invoices found</h3>
               <p className="text-muted-foreground mb-4">Get started by creating your first invoice.</p>
               <Button 
-                onClick={() => router.push("/sales/invoices/new")}
+                onClick={() => router.push("/demo/sales/invoices/new")}
                 className="flex items-center mx-auto gap-1"
               >
                 <Plus size={16} />
