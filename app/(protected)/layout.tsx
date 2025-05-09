@@ -5,6 +5,8 @@ import { Sidebar } from "@/components/sidebar/sidebar";
 import { SIDEBAR_ITEMS } from "@/components/sidebar/sidebar-config";
 import { UserRoleEnum, SubscriptionTierEnum } from "@/lib/types";
 import { Header } from "@/components/shared/header";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api-client";
 
 export default function ProtectedLayout({
     children,
@@ -12,38 +14,53 @@ export default function ProtectedLayout({
     children: React.ReactNode;
 }>) {
     const [userRole, setUserRole] = useState<UserRoleEnum | undefined>(undefined);
-    const [subscriptionTier,setSubscriptionTier] = useState<SubscriptionTierEnum | undefined>(undefined);
+    const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTierEnum | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [collapsed, setCollapsed] = useState(false);
+    const router = useRouter();
 
-
-    // In a real app, this would fetch the user data from an API or context
+    // Fetch user data and check for company
     useEffect(() => {
-        // Simulating an API call to get user data
         const fetchUserData = async () => {
             try {
-                // Replace this with your actual API call
-                const response = await fetch("/api/v1/auth/me");
-                if (response.ok) {
-                    const data = await response.json();
-                    setUserRole(data.user?.role as UserRoleEnum);
-                    setSubscriptionTier(data.subscription?.plan as SubscriptionTierEnum)
+                // Use our API client for consistency
+                const response = await api.get('/auth/me');
+                
+                if (response.success && response.data) {
+                    const userData = response.data as {
+                        user: { 
+                            role: string;
+                            companyId?: string; 
+                        };
+                        company?: unknown;
+                        subscription?: { 
+                            plan: string;
+                        };
+                    };
+                    
+                    // Check if user has a company, if not redirect to onboarding
+                    if (!userData.user.companyId || !userData.company) {
+                        router.push('/onboarding');
+                        return;
+                    }
+                    
+                    setUserRole(userData.user.role as UserRoleEnum);
+                    setSubscriptionTier(userData.subscription?.plan as SubscriptionTierEnum);
                 } else {
-                    // Default to viewer if there's an error
+                    // Default to ADMIN if there's an error
                     setUserRole(UserRoleEnum.ADMIN);
                 }
             } catch (error) {
                 console.error("Error fetching user data:", error);
-                // Default to viewer if there's an error
+                // Default to ADMIN if there's an error
                 setUserRole(UserRoleEnum.ADMIN);
             } finally {
                 setLoading(false);
             }
         };
 
-
         fetchUserData();
-    }, []);
+    }, [router]);
 
     if (loading) {
         return (

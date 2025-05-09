@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
   ArrowDownIcon, 
   ArrowUpIcon, 
@@ -10,9 +10,12 @@ import {
   UsersIcon,
   AlertCircle,
   MoreHorizontal,
-  Plus
+  Plus,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
+import { api } from "@/lib/api-client";
+import { useRouter } from "next/navigation";
 
 // Type definitions
 interface DashboardCardProps {
@@ -55,6 +58,29 @@ interface StockAlert {
 
 interface LowStockAlertsProps {
   alerts: StockAlert[];
+}
+
+interface DashboardData {
+  summary: {
+    totalInventory: {
+      count: number;
+      changePercentage: number;
+    };
+    pendingOrders: {
+      count: number;
+      changePercentage: number;
+    };
+    purchaseOrders: {
+      count: number;
+      changePercentage: number;
+    };
+    activeVendors: {
+      count: number;
+      changePercentage: number;
+    };
+  };
+  recentActivities: Activity[];
+  lowStockAlerts: StockAlert[];
 }
 
 // Dashboard Card Component
@@ -106,6 +132,33 @@ const EmptyState = ({ title, description, actionLabel, actionLink }: EmptyStateP
           {actionLabel}
         </Link>
       )}
+    </div>
+  );
+};
+
+// Loading Spinner Component
+const LoadingSpinner = () => {
+  return (
+    <div className="flex justify-center items-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <span className="ml-2 text-lg">Loading...</span>
+    </div>
+  );
+};
+
+// Error Display Component
+const ErrorDisplay = ({ message, retry }: { message: string, retry: () => void }) => {
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex flex-col items-center justify-center text-center h-64">
+      <AlertCircle size={40} className="text-red-500 mb-4" />
+      <h3 className="text-lg font-medium mb-2">Error Loading Data</h3>
+      <p className="text-muted-foreground mb-4 max-w-md">{message}</p>
+      <button 
+        onClick={retry}
+        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-10 py-2 px-4 hover:bg-primary/90"
+      >
+        Try Again
+      </button>
     </div>
   );
 };
@@ -227,115 +280,92 @@ const LowStockAlerts = ({ alerts }: LowStockAlertsProps) => {
 };
 
 export default function Dashboard() {
-  // Dummy data for dashboard
-  const summaryCards = [
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Define the user response type
+  interface UserResponse {
+    user: {
+      companyId?: string | null;
+    };
+    company?: unknown;
+  }
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // First, check if the user has a company
+      const userResponse = await api.get<UserResponse>('/auth/me');
+      
+      if (userResponse.success && userResponse.data) {
+        // If the user doesn't have a company, redirect to onboarding
+        if (!userResponse.data.user.companyId || !userResponse.data.company) {
+          router.push('/onboarding');
+          return;
+        }
+        
+        // Otherwise, fetch dashboard data
+        const response = await api.get<DashboardData>('/reports/dashboard');
+        
+        if (response.success && response.data) {
+          setData(response.data);
+        } else {
+          setError(response.error || 'Failed to load dashboard data');
+        }
+      } else {
+        setError(userResponse.error || 'Failed to load user data');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+      console.error('Dashboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Transform API data into summary cards format when data is available
+  const summaryCards = data ? [
     { 
       title: "Total Inventory", 
-      value: "1,234", 
-      change: 5.2, 
+      value: data.summary.totalInventory.count.toLocaleString(), 
+      change: data.summary.totalInventory.changePercentage, 
       icon: <BoxIcon size={24} className="text-blue-500" />, 
       color: "bg-blue-100", 
       link: "/inventory/stock" 
     },
     { 
       title: "Pending Orders", 
-      value: "42", 
-      change: -2.5, 
+      value: data.summary.pendingOrders.count.toLocaleString(), 
+      change: data.summary.pendingOrders.changePercentage, 
       icon: <ShoppingCartIcon size={24} className="text-purple-500" />, 
       color: "bg-purple-100", 
       link: "/sales/orders" 
     },
     { 
       title: "Purchase Orders", 
-      value: "18", 
-      change: 12.3, 
+      value: data.summary.purchaseOrders.count.toLocaleString(), 
+      change: data.summary.purchaseOrders.changePercentage, 
       icon: <TruckIcon size={24} className="text-amber-500" />, 
       color: "bg-amber-100", 
       link: "/purchases/orders" 
     },
     { 
       title: "Active Vendors", 
-      value: "56", 
-      change: 0.8, 
+      value: data.summary.activeVendors.count.toLocaleString(), 
+      change: data.summary.activeVendors.changePercentage, 
       icon: <UsersIcon size={24} className="text-green-500" />, 
       color: "bg-green-100", 
       link: "/purchases/vendors" 
     },
-  ];
-
-  // Dummy data for recent activities
-  const recentActivities = [
-    {
-      id: 1,
-      description: "Stock adjustment",
-      type: "Inventory",
-      user: "John Doe",
-      date: "2025-05-04",
-      status: "Completed",
-      link: "/inventory/stock"
-    },
-    {
-      id: 2,
-      description: "New purchase order created",
-      type: "Purchase",
-      user: "Jane Smith",
-      date: "2025-05-03",
-      status: "Pending",
-      link: "/purchases/orders"
-    },
-    {
-      id: 3,
-      description: "Order shipped",
-      type: "Sales",
-      user: "Robert Brown",
-      date: "2025-05-03",
-      status: "Completed",
-      link: "/sales/orders"
-    },
-    {
-      id: 4,
-      description: "New product added",
-      type: "Inventory",
-      user: "Alice Johnson",
-      date: "2025-05-02",
-      status: "Completed",
-      link: "/inventory/products"
-    },
-    {
-      id: 5,
-      description: "Quality check failed",
-      type: "Manufacturing",
-      user: "David Lee",
-      date: "2025-05-01",
-      status: "Failed",
-      link: "/manufacturing/quality-checks"
-    }
-  ];
-
-  // Dummy data for low stock alerts
-  const lowStockAlerts = [
-    {
-      id: 101,
-      product: "Steel Bolts (10mm)",
-      currentStock: 25,
-      reorderPoint: 50,
-      location: "Warehouse A"
-    },
-    {
-      id: 102,
-      product: "Aluminum Sheet (2mm)",
-      currentStock: 5,
-      reorderPoint: 20,
-      location: "Factory Floor"
-    },
-    {
-      id: 103,
-      product: "Plastic Housing Type B",
-      currentStock: 12,
-      reorderPoint: 30,
-      location: "Warehouse B"
-    }
-  ];
+  ] : [];
 
   return (
     <div className="space-y-6">
@@ -351,22 +381,30 @@ export default function Dashboard() {
         </div>
       </div>
       
-      {/* Summary Cards */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {summaryCards.map((card, index) => (
-          <DashboardCard key={index} {...card} />
-        ))}
-      </div>
+      {loading ? (
+        <LoadingSpinner />
+      ) : error ? (
+        <ErrorDisplay message={error} retry={fetchDashboardData} />
+      ) : data ? (
+        <>
+          {/* Summary Cards */}
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {summaryCards.map((card, index) => (
+              <DashboardCard key={index} {...card} />
+            ))}
+          </div>
 
-      {/* Low Stock Alerts */}
-      <div className="mt-6">
-        <LowStockAlerts alerts={lowStockAlerts} />
-      </div>
-      
-      {/* Recent Activities */}
-      <div className="mt-6">
-        <RecentActivitiesTable activities={recentActivities} />
-      </div>
+          {/* Low Stock Alerts */}
+          <div className="mt-6">
+            <LowStockAlerts alerts={data.lowStockAlerts} />
+          </div>
+          
+          {/* Recent Activities */}
+          <div className="mt-6">
+            <RecentActivitiesTable activities={data.recentActivities} />
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

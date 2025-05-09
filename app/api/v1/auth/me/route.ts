@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { companies, subscriptions, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 import { verifyJwt } from '@/lib/jwt';
 
 export async function GET() {
   try {
     const token = getToken();
+    console.log('Token in me', token);
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

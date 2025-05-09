@@ -1,20 +1,20 @@
 import { NextResponse } from 'next/server';
-import { deleteToken } from '@/lib/cookies';
+import { cookies } from 'next/headers';
 
 
 export async function POST() {
   try {
-    // Delete the authentication token from cookies
-    await deleteToken();
-    
+    // Clear the auth token
+    cookies().delete('token');
+
     return NextResponse.json({ 
       success: true,
       message: 'Logged out successfully' 
     });
-  } catch (err) {
-    console.error('Error in logout:', err);
+  } catch (error) {
+    console.error('Logout error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'An error occurred during logout' },
       { status: 500 }
     );
   }
