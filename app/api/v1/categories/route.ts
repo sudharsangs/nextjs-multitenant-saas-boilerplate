@@ -15,7 +15,7 @@ const categorySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getToken();
+    const token = await getToken();
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const companyId = getAuthUser(request)?.companyId;
-
+    console.log('companyId in categories:', companyId);
     if (!companyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

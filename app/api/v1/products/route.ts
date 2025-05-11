@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -155,7 +155,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -189,7 +189,7 @@ export async function DELETE(request: Request) {
 // Categories
 export async function GET_CATEGORIES(request: NextRequest) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -223,7 +223,7 @@ export async function GET_CATEGORIES(request: NextRequest) {
 
 export async function POST_CATEGORY(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -254,7 +254,7 @@ export async function POST_CATEGORY(request: Request) {
 
 export async function PUT_CATEGORY(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -298,7 +298,7 @@ export async function PUT_CATEGORY(request: Request) {
 
 export async function DELETE_CATEGORY(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

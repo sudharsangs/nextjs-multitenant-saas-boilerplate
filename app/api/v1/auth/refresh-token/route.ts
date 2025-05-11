@@ -7,7 +7,7 @@ import { getToken, setToken } from '@/lib/server-cookies';
 
 export async function POST() {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

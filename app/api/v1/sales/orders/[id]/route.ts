@@ -23,7 +23,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -65,7 +65,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -160,7 +160,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

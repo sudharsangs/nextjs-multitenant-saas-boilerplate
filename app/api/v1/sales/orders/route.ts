@@ -24,7 +24,7 @@ const orderSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

@@ -19,7 +19,7 @@ const locationSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -179,7 +179,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -249,7 +249,7 @@ export async function DELETE(request: Request) {
 // Get inventory by location
 export async function GET_INVENTORY(request: Request) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

@@ -37,8 +37,9 @@ export async function GET(
 ) {
   try {
     const { userId } = getAuthUser(request);
-    // Special case: if id is "current", get the company for the current user
-    if (params.id === "current") {
+    const {id: companyId} = await params;
+
+    if (companyId === "current") {
       const [userCompany] = await db
         .select({
           id: companies.id,
@@ -75,10 +76,7 @@ export async function GET(
       return NextResponse.json(userCompany);
     }
 
-    // Regular case: get company by ID
-    const companyId = params.id;
 
-    // Get company details
     const [company] = await db
       .select()
       .from(companies)
@@ -107,7 +105,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -115,7 +113,7 @@ export async function PUT(
       );
     }
 
-    const companyId = params.id;
+    const companyId = await params.id;
     const body = await request.json();
     const companyData = companyUpdateSchema.parse(body);
 
@@ -164,7 +162,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -215,7 +213,7 @@ export async function GET_USERS(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -273,7 +271,7 @@ export async function GET_SUBSCRIPTION(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -327,7 +325,7 @@ export async function GET_STATS(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -424,7 +422,7 @@ export async function GET_LOCATIONS(
   { params }: { params: { id: string } }
 ) {
   try {
-    const token = getToken();
+    const token = await getToken();;
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

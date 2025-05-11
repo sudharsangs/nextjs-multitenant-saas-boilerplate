@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
     try {
       // Verify JWT token
       const decodedToken = await verifyJwt(token);
-      
+      console.log('Decoded token:', decodedToken);
       // Add the user info to request headers for use in API routes
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set('x-user-id', decodedToken.userId);

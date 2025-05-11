@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers';
 import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
-export function getToken(): string | undefined {
+export async function getToken(): Promise<string | undefined> {
   const cookieStore: ReadonlyRequestCookies = cookies();
-  const token = cookieStore.get('token');
+  const token = await cookieStore.get('token');
   return token?.value;
 }
 
