@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { batches } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 
 const batchUpdateSchema = z.object({
   expiryDate: z.string().transform(str => new Date(str)).optional(),

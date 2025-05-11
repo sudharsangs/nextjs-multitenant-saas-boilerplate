@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { orders, orderItems } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { eq } from 'drizzle-orm';
+import { getToken } from '@/lib/server-cookies';
 
 const orderUpdateSchema = z.object({
   customerId: z.string(),
@@ -32,7 +32,7 @@ export async function GET(
     }
 
     const order = await db.query.orders.findFirst({
-      where: eq(orders.id, params.id),
+      where: (orders) => eq(orders.id, params.id),
       with: {
         customer: true,
         items: {
@@ -75,7 +75,7 @@ export async function PUT(
 
     // First check if order exists and its status
     const existingOrder = await db.query.orders.findFirst({
-      where: eq(orders.id, params.id)
+      where: (orders) => eq(orders.id, params.id)
     });
 
     if (!existingOrder) {
@@ -99,16 +99,15 @@ export async function PUT(
     // Start a transaction to update order and items
     return await db.transaction(async (tx) => {
       // Update order details
-      const [order] = await tx
+      await tx
         .update(orders)
         .set({
           customerId: updateData.customerId,
           orderNumber: updateData.orderNumber,
-          totalAmount: updateData.totalAmount,
+          totalAmount: updateData.totalAmount.toString(),
           updatedAt: new Date(),
         })
-        .where(eq(orders.id, params.id))
-        .returning();
+        .where(eq(orders.id, params.id));
 
       // Delete existing items
       await tx
@@ -120,15 +119,15 @@ export async function PUT(
         orderId: params.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.quantity * item.unitPrice,
+        unitPrice: item.unitPrice.toString(), // Convert to string for PostgreSQL decimal
+        totalPrice: (item.quantity * item.unitPrice).toString(), // Convert to string for PostgreSQL decimal
       }));
 
       await tx.insert(orderItems).values(orderItemsData);
 
       // Return updated order with items
       const updatedOrder = await db.query.orders.findFirst({
-        where: eq(orders.id, params.id),
+        where: (orders) => eq(orders.id, params.id),
         with: {
           customer: true,
           items: {
@@ -190,7 +189,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Error in DELETE order:', err);
-    if (err.message === 'Order not found') {
+    if (err instanceof Error && err.message === 'Order not found') {
       return NextResponse.json(
         { error: 'Order not found' },
         { status: 404 }

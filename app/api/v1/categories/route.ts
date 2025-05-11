@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { categories } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 
 const categorySchema = z.object({
   companyId: z.string(),

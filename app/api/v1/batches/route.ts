@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { batches } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 
 const batchSchema = z.object({
   companyId: z.string(),

@@ -10,7 +10,7 @@ import {
   subscriptions
 } from '@/db/schema';
 import { eq, and, count, sql } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 import { getAuthUser } from '@/lib/auth';
 
 // Schema validation for company updates

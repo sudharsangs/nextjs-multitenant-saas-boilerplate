@@ -17,7 +17,7 @@ const inventorySchema = z.object({
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
     if (!token) {
       return NextResponse.json(
@@ -30,7 +30,6 @@ export async function GET(request: Request) {
     const companyId = searchParams.get('companyId');
     const locationId = searchParams.get('locationId');
     const productId = searchParams.get('productId');
-
     if (!companyId) {
       return NextResponse.json(
         { error: 'Company ID is required' },

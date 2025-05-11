@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { inventory } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 
 // Schema validation for inventory updates
 const inventoryUpdateSchema = z.object({

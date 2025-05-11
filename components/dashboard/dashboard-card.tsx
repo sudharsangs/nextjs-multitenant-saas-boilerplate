@@ -13,19 +13,19 @@ interface DashboardCardProps {
 
 export const DashboardCard = ({ title, value, change, icon, color, link }: DashboardCardProps) => {
   const isPositive = (change ?? 0) > 0;
-  const safeValue = value ?? 0;
-  const safeChange = change ?? 0;
+  const displayValue = value ?? 0;
+  const displayChange = Math.abs(change ?? 0);
   
   return (
     <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
       <div className="flex justify-between items-start">
         <div>
           <p className="text-muted-foreground text-sm font-medium">{title}</p>
-          <h3 className="text-3xl font-bold mt-2">{safeValue}</h3>
+          <h3 className="text-3xl font-bold mt-2">{displayValue}</h3>
           <div className="flex items-center mt-2">
             <span className={`flex items-center text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
               {isPositive ? <ArrowUpIcon size={14} className="mr-1" /> : <ArrowDownIcon size={14} className="mr-1" />}
-              {Math.abs(safeChange)}%
+              {displayChange}%
             </span>
             <span className="text-muted-foreground text-sm ml-1">from last month</span>
           </div>
@@ -36,8 +36,8 @@ export const DashboardCard = ({ title, value, change, icon, color, link }: Dashb
       </div>
       {link && (
         <div className="mt-4 pt-4 border-t border-border">
-          <Link href={link} className="text-sm text-primary hover:underline">
-            View All →
+          <Link href={link} className="text-sm font-medium text-primary hover:text-primary/90">
+            View Details
           </Link>
         </div>
       )}

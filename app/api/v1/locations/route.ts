@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { locations, inventory } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 
 // Schema validation for locations
 const locationSchema = z.object({

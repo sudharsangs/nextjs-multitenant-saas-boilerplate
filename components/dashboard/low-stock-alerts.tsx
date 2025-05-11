@@ -15,8 +15,6 @@ interface LowStockAlertsProps {
 }
 
 export const LowStockAlerts = ({ alerts }: LowStockAlertsProps) => {
-  const safeAlerts = alerts ?? [];
-  
   return (
     <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
       <div className="flex justify-between items-center p-6 border-b border-border">
@@ -25,7 +23,7 @@ export const LowStockAlerts = ({ alerts }: LowStockAlertsProps) => {
           View All
         </Link>
       </div>
-      {safeAlerts.length > 0 ? (
+      {alerts.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -38,7 +36,7 @@ export const LowStockAlerts = ({ alerts }: LowStockAlertsProps) => {
               </tr>
             </thead>
             <tbody>
-              {safeAlerts.map((alert: StockAlert) => (
+              {alerts.map((alert: StockAlert) => (
                 <tr key={alert.id} className="border-b border-border hover:bg-muted/50">
                   <td className="p-4 text-sm font-medium">{alert.product}</td>
                   <td className="p-4 text-sm text-red-500 font-medium">{alert.currentStock}</td>
@@ -57,8 +55,8 @@ export const LowStockAlerts = ({ alerts }: LowStockAlertsProps) => {
       ) : (
         <div className="p-6">
           <EmptyState 
-            title="No low stock alerts"
-            description="All stock levels are currently above their reorder points"
+            title="No low stock alerts" 
+            description="All your inventory items are above their reorder points"
           />
         </div>
       )}

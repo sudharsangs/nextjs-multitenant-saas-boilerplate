@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
-import { orders, orderItems, products, customers } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { orders, orderItems, products } from '@/db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { getToken } from '@/lib/server-cookies';
 
 const orderItemSchema = z.object({
   productId: z.string(),
@@ -41,20 +41,52 @@ export async function GET(request: Request) {
       );
     }
 
-    const ordersList = await db.query.orders.findMany({
-      where: eq(orders.companyId, companyId),
-      with: {
-        customer: true,
-        items: {
-          with: {
-            product: true
-          }
-        }
-      },
-      orderBy: (orders, { desc }) => [desc(orders.createdAt)]
-    });
+    const ordersList = await db.select().from(orders)
+      .where(eq(orders.companyId, companyId))
+      .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .orderBy(desc(orders.createdAt));
 
-    return NextResponse.json(ordersList);
+    type FormattedOrder = {
+      id: string;
+      companyId: string;
+      customerId: string;
+      orderNumber: string;
+      status: string;
+      totalAmount: string;
+      createdAt: Date;
+      updatedAt: Date;
+      items: Array<{
+        id: string;
+        orderId: string;
+        productId: string;
+        quantity: number;
+        unitPrice: string;
+        totalPrice: string;
+        product: typeof products.$inferSelect | null;
+      }>;
+    };
+
+    const formattedOrders = ordersList.reduce((acc, order) => {
+      const existingOrder = acc.find(o => o.id === order.orders.id);
+      if (!existingOrder) {
+        acc.push({
+          ...order.orders,
+          items: order.order_items ? [{
+            ...order.order_items,
+            product: order.products
+          }] : []
+        });
+      } else if (order.order_items) {
+        existingOrder.items.push({
+          ...order.order_items,
+          product: order.products
+        });
+      }
+      return acc;
+    }, [] as FormattedOrder[]);
+
+    return NextResponse.json(formattedOrders);
   } catch (err) {
     console.error('Error in GET orders:', err);
     return NextResponse.json(
@@ -87,7 +119,7 @@ export async function POST(request: Request) {
           customerId: orderData.customerId,
           orderNumber: orderData.orderNumber,
           status: orderData.status,
-          totalAmount: orderData.totalAmount,
+          totalAmount: orderData.totalAmount.toString(),
         })
         .returning();
 
@@ -96,8 +128,8 @@ export async function POST(request: Request) {
         orderId: newOrder.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice,
+        unitPrice: item.unitPrice.toString(), // Convert to string for DB storage
+        totalPrice: item.totalPrice.toString(), // Convert to string for DB storage
       }));
 
       await tx.insert(orderItems).values(orderItemsData);

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/db';
 import { products, categories } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { getToken } from '@/lib/cookies';
+import { getToken } from '@/lib/server-cookies';
 import { getAuthUser } from '@/lib/auth';
 import type { NextRequest } from 'next/server';
 

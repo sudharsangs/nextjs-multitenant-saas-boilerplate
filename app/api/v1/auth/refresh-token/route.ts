@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { signJwt, verifyJwt } from '@/lib/jwt';
-import { getToken, setToken } from '@/lib/cookies';
+import { getToken, setToken } from '@/lib/server-cookies';
 
 export async function POST() {
   try {
