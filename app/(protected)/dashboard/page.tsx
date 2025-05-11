@@ -60,7 +60,7 @@ export default function ProtectedDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await api.get<{ data: DashboardData }>('/dashboard');
+        const response = await api.get<{ data: DashboardData }>('/reports/dashboard');
         if (response.success && response.data) {
           setDashboardData(response.data.data);
         } else {
@@ -90,32 +90,32 @@ export default function ProtectedDashboard() {
   const summaryCards = [
     { 
       title: "Total Inventory", 
-      value: dashboardData.totalProducts, 
-      change: dashboardData.productChange, 
+      value: dashboardData?.totalProducts ?? 0, 
+      change: dashboardData?.productChange ?? 0, 
       icon: <BoxIcon size={24} className="text-blue-500" />, 
       color: "bg-blue-100", 
       link: "/inventory/stock" 
     },
     { 
       title: "Pending Orders", 
-      value: dashboardData.pendingOrders, 
-      change: dashboardData.orderChange, 
+      value: dashboardData?.pendingOrders ?? 0, 
+      change: dashboardData?.orderChange ?? 0, 
       icon: <ShoppingCartIcon size={24} className="text-purple-500" />, 
       color: "bg-purple-100", 
       link: "/sales/orders" 
     },
     { 
       title: "Purchase Orders", 
-      value: dashboardData.purchaseOrders, 
-      change: dashboardData.purchaseChange, 
+      value: dashboardData?.purchaseOrders ?? 0, 
+      change: dashboardData?.purchaseChange ?? 0, 
       icon: <TruckIcon size={24} className="text-amber-500" />, 
       color: "bg-amber-100", 
       link: "/purchases/orders" 
     },
     { 
       title: "Active Vendors", 
-      value: dashboardData.activeVendors, 
-      change: dashboardData.vendorChange, 
+      value: dashboardData?.activeVendors ?? 0, 
+      change: dashboardData?.vendorChange ?? 0, 
       icon: <UsersIcon size={24} className="text-green-500" />, 
       color: "bg-green-100", 
       link: "/purchases/vendors" 
@@ -145,12 +145,12 @@ export default function ProtectedDashboard() {
 
       {/* Low Stock Alerts */}
       <div className="mt-6">
-        <LowStockAlerts alerts={dashboardData.lowStockAlerts} />
+        <LowStockAlerts alerts={dashboardData?.lowStockAlerts ?? []} />
       </div>
       
       {/* Recent Activities */}
       <div className="mt-6">
-        <RecentActivitiesTable activities={dashboardData.recentActivities} />
+        <RecentActivitiesTable activities={dashboardData?.recentActivities ?? []} />
       </div>
     </div>
   );
