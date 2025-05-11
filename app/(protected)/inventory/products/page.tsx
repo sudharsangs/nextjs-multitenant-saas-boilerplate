@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Search, 
@@ -14,99 +14,30 @@ import {
   FileUp,
   Package
 } from "lucide-react";
-import { Header } from "@/components/shared/header";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
   CardHeader, 
   CardTitle, 
-  CardDescription, 
   CardContent
 } from "@/components/ui/card";
+import { api } from "@/lib/api-client";
 
-// Mock products data
-const mockProducts = [
-  { 
-    id: "prod1", 
-    name: "Steel Bolts (10mm)", 
-    code: "STL-B10",
-    category: "Raw Materials",
-    totalStock: 2500,
-    unit: "PIECE",
-    reorderPoint: 500,
-    status: "Active"
-  },
-  { 
-    id: "prod2", 
-    name: "Aluminum Sheet (2mm)", 
-    code: "ALU-S2",
-    category: "Raw Materials",
-    totalStock: 150,
-    unit: "PIECE",
-    reorderPoint: 50,
-    status: "Active"
-  },
-  { 
-    id: "prod3", 
-    name: "Plastic Housing Type B", 
-    code: "PLT-HB",
-    category: "Packaging Materials",
-    totalStock: 320,
-    unit: "PIECE",
-    reorderPoint: 100,
-    status: "Active"
-  },
-  { 
-    id: "prod4", 
-    name: "Circuit Board X1", 
-    code: "CBX-001",
-    category: "Electrical Components",
-    totalStock: 75,
-    unit: "PIECE",
-    reorderPoint: 25,
-    status: "Inactive"
-  },
-  { 
-    id: "prod5", 
-    name: "LED Bulbs 5W", 
-    code: "LED-B5W",
-    category: "Electrical Components",
-    totalStock: 450,
-    unit: "PIECE",
-    reorderPoint: 100,
-    status: "Active"
-  },
-  { 
-    id: "prod6", 
-    name: "Stainless Steel Screws", 
-    code: "SSS-001",
-    category: "Raw Materials",
-    totalStock: 5000,
-    unit: "PIECE",
-    reorderPoint: 1000,
-    status: "Active"
-  },
-  { 
-    id: "prod7", 
-    name: "Thermal Paste", 
-    code: "TP-100",
-    category: "Electrical Components",
-    totalStock: 45,
-    unit: "PIECE",
-    reorderPoint: 20,
-    status: "Low Stock"
-  },
-  { 
-    id: "prod8", 
-    name: "Circuit Board X2", 
-    code: "CBX-002",
-    category: "Electrical Components",
-    totalStock: 0,
-    unit: "PIECE",
-    reorderPoint: 15,
-    status: "Out of Stock"
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  code: string;
+  categoryId: string;
+  category: {
+    id: string;
+    name: string;
+  };
+  totalStock: number;
+  unit: string;
+  reorderPoint: number;
+  status: string;
+  companyId: string;
+}
 
 // Filter options
 const categoryFilters = [
@@ -128,6 +59,10 @@ const statusFilters = [
 
 export default function ProductsPage() {
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [, setCategories] = useState<{ id: string; name: string; }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
@@ -135,8 +70,53 @@ export default function ProductsPage() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [actionProductId, setActionProductId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const companyId = localStorage.getItem('companyId');
+        
+        // Fetch products and categories in parallel
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          api.get<Product[]>(`/products?companyId=${companyId}`),
+          api.get<{ id: string; name: string; }[]>(`/categories?companyId=${companyId}`)
+        ]);
+
+        if (productsResponse.success && productsResponse.data) {
+          setProducts(productsResponse.data);
+        }
+
+        if (categoriesResponse.success && categoriesResponse.data) {
+          setCategories(categoriesResponse.data);
+        }
+        
+      } catch (err) {
+        setError('Failed to load products');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleDelete = async (productId: string) => {
+    try {
+      const response = await api.delete(`/products/${productId}`);
+      if (response.success) {
+        setProducts(products.filter(p => p.id !== productId));
+      } else {
+        throw new Error(response.error || 'Failed to delete product');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+    setActionProductId(null);
+  };
+
   // Filter and sort products
-  const filteredProducts = mockProducts
+  const filteredProducts = products
     .filter((product) => {
       // Search filter
       const matchesSearch =
@@ -146,7 +126,7 @@ export default function ProductsPage() {
 
       // Category filter
       const matchesCategory =
-        selectedCategory === "All Categories" || product.category === selectedCategory;
+        selectedCategory === "All Categories" || product.category.name === selectedCategory;
 
       // Status filter
       const matchesStatus =
@@ -162,8 +142,8 @@ export default function ProductsPage() {
           : b.totalStock - a.totalStock;
       } else {
         // Sort alphabetically for other fields (name, code, etc.)
-        const valueA = (a[sortField] as string).toLowerCase();
-        const valueB = (b[sortField] as string).toLowerCase();
+        const valueA = (a[sortField as keyof Product] as string).toLowerCase();
+        const valueB = (b[sortField as keyof Product] as string).toLowerCase();
         return sortDirection === "asc"
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
@@ -194,12 +174,27 @@ export default function ProductsPage() {
     setActionProductId(actionProductId === productId ? null : productId);
   };
 
-  const handleDelete = (productId: string) => {
-    // Mock delete functionality
-    console.log(`Delete product with ID: ${productId}`);
-    setActionProductId(null);
-    // Actual implementation would send a DELETE request to the API
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Error loading products</h2>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -394,7 +389,7 @@ export default function ProductsPage() {
                         {product.code}
                       </td>
                       <td className="py-3 px-4 text-sm">
-                        {product.category}
+                        {product.category.name}
                       </td>
                       <td className="py-3 px-4 text-sm">
                         <div className={
@@ -464,7 +459,7 @@ export default function ProductsPage() {
           {/* Simple Pagination */}
           <div className="flex items-center justify-between px-4 py-3 border-t">
             <div className="text-sm text-muted-foreground">
-              Showing {filteredProducts.length} of {mockProducts.length} products
+              Showing {filteredProducts.length} of {products.length} products
             </div>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" disabled>

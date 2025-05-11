@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Plus, 
   Search, 
-  Filter, 
-  ArrowUpDown, 
   MoreHorizontal, 
-  AlertCircle,
   FileDown,
   FolderTree,
   ChevronRight,
@@ -15,6 +12,8 @@ import {
   Folder
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api-client";
 
 interface Category {
   id: string;
@@ -23,88 +22,37 @@ interface Category {
   parentId: string | null;
   productCount: number;
   hasChildren: boolean;
+  companyId: string;
 }
 
 export default function CategoriesPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   
-  // Dummy data for categories
-  const [categories, setCategories] = useState<Category[]>([
-    { 
-      id: "1", 
-      name: "Raw Materials", 
-      description: "Basic materials used in manufacturing",
-      parentId: null,
-      productCount: 12,
-      hasChildren: true
-    },
-    { 
-      id: "2", 
-      name: "Finished Products", 
-      description: "Items ready for sale",
-      parentId: null,
-      productCount: 8,
-      hasChildren: false
-    },
-    { 
-      id: "3", 
-      name: "Packaging", 
-      description: "Materials used for packaging products",
-      parentId: null,
-      productCount: 5,
-      hasChildren: true
-    },
-    { 
-      id: "4", 
-      name: "Steel Bolts", 
-      description: "Various types of steel bolts",
-      parentId: "1",
-      productCount: 4,
-      hasChildren: false
-    },
-    { 
-      id: "5", 
-      name: "Aluminum Sheets", 
-      description: "Aluminum sheets of different sizes",
-      parentId: "1",
-      productCount: 3,
-      hasChildren: false
-    },
-    { 
-      id: "6", 
-      name: "Copper Wires", 
-      description: "Copper wires of various gauges",
-      parentId: "1",
-      productCount: 5,
-      hasChildren: false
-    },
-    { 
-      id: "7", 
-      name: "Boxes", 
-      description: "Cardboard boxes for shipping",
-      parentId: "3",
-      productCount: 3,
-      hasChildren: false
-    },
-    { 
-      id: "8", 
-      name: "Bubble Wrap", 
-      description: "Protective bubble wrap",
-      parentId: "3",
-      productCount: 1,
-      hasChildren: false
-    },
-    { 
-      id: "9", 
-      name: "Tape", 
-      description: "Various types of tapes",
-      parentId: "3",
-      productCount: 1,
-      hasChildren: false
-    },
-  ]);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const companyId = localStorage.getItem('companyId'); // We'll need to handle this properly
+        const response = await api.get<Category[]>(`/categories?companyId=${companyId}`);
+        
+        if (response.success && response.data) {
+          setCategories(response.data);
+        } else {
+          setError(response.error || 'Failed to load categories');
+        }
+      } catch (err) {
+        setError('Failed to load categories');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -222,6 +170,28 @@ export default function CategoriesPage() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Error loading categories</h2>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -272,36 +242,14 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading categories...</p>
-          </div>
+      <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
+        <div className="flex items-center mb-4">
+          <FolderTree size={20} className="mr-2" />
+          <h3 className="text-lg font-medium">Category Tree</h3>
         </div>
-      ) : categories.length === 0 ? (
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border flex flex-col items-center justify-center text-center h-64">
-          <AlertCircle size={40} className="text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No categories found</h3>
-          <p className="text-muted-foreground mb-4 max-w-md">Start by adding categories to organize your products.</p>
-          <Link 
-            href="/inventory/categories/new"
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-10 py-2 px-4 hover:bg-primary/90"
-          >
-            <Plus size={16} className="mr-2" />
-            Add Your First Category
-          </Link>
-        </div>
-      ) : (
-        <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-          <div className="flex items-center mb-4">
-            <FolderTree size={20} className="mr-2" />
-            <h3 className="text-lg font-medium">Category Tree</h3>
-          </div>
-          
-          {renderCategoryTree(topLevelCategories)}
-        </div>
-      )}
+        
+        {renderCategoryTree(topLevelCategories)}
+      </div>
     </div>
   );
 }

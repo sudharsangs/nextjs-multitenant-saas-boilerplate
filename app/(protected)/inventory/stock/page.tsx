@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Search, 
@@ -18,128 +18,6 @@ import {
   CardTitle, 
   CardContent
 } from "@/components/ui/card";
-
-// Mock inventory data
-const mockInventory = [
-  { 
-    id: "inv1", 
-    productId: "prod1",
-    productName: "Steel Bolts (10mm)", 
-    productCode: "STL-B10",
-    category: "Raw Materials",
-    locations: [
-      { locationId: "loc1", locationName: "Main Warehouse", quantity: 1500 },
-      { locationId: "loc2", locationName: "Factory Floor", quantity: 850 },
-      { locationId: "loc3", locationName: "Assembly Area", quantity: 150 },
-    ],
-    totalStock: 2500,
-    unit: "PIECE",
-    reorderPoint: 500,
-    costPrice: 1.50
-  },
-  { 
-    id: "inv2", 
-    productId: "prod2",
-    productName: "Aluminum Sheet (2mm)", 
-    productCode: "ALU-S2",
-    category: "Raw Materials",
-    locations: [
-      { locationId: "loc1", locationName: "Main Warehouse", quantity: 150 },
-    ],
-    totalStock: 150,
-    unit: "PIECE",
-    reorderPoint: 50,
-    costPrice: 35.75
-  },
-  { 
-    id: "inv3", 
-    productId: "prod3",
-    productName: "Plastic Housing Type B", 
-    productCode: "PLT-HB",
-    category: "Packaging Materials",
-    locations: [
-      { locationId: "loc1", locationName: "Main Warehouse", quantity: 250 },
-      { locationId: "loc4", locationName: "Packaging Station", quantity: 70 },
-    ],
-    totalStock: 320,
-    unit: "PIECE",
-    reorderPoint: 100,
-    costPrice: 12.25
-  },
-  { 
-    id: "inv4", 
-    productId: "prod4",
-    productName: "Circuit Board X1", 
-    productCode: "CBX-001",
-    category: "Electrical Components",
-    locations: [
-      { locationId: "loc1", locationName: "Main Warehouse", quantity: 25 },
-      { locationId: "loc5", locationName: "Electronics Lab", quantity: 50 },
-    ],
-    totalStock: 75,
-    unit: "PIECE",
-    reorderPoint: 25,
-    costPrice: 45.00
-  },
-  { 
-    id: "inv5", 
-    productId: "prod5",
-    productName: "LED Bulbs 5W", 
-    productCode: "LED-B5W",
-    category: "Electrical Components",
-    locations: [
-      { locationId: "loc1", locationName: "Main Warehouse", quantity: 350 },
-      { locationId: "loc5", locationName: "Electronics Lab", quantity: 100 },
-    ],
-    totalStock: 450,
-    unit: "PIECE",
-    reorderPoint: 100,
-    costPrice: 3.25
-  },
-  { 
-    id: "inv6", 
-    productId: "prod6",
-    productName: "Stainless Steel Screws", 
-    productCode: "SSS-001",
-    category: "Raw Materials",
-    locations: [
-      { locationId: "loc1", locationName: "Main Warehouse", quantity: 4000 },
-      { locationId: "loc2", locationName: "Factory Floor", quantity: 800 },
-      { locationId: "loc3", locationName: "Assembly Area", quantity: 200 },
-    ],
-    totalStock: 5000,
-    unit: "PIECE",
-    reorderPoint: 1000,
-    costPrice: 0.25
-  },
-  { 
-    id: "inv7", 
-    productId: "prod7",
-    productName: "Thermal Paste", 
-    productCode: "TP-100",
-    category: "Electrical Components",
-    locations: [
-      { locationId: "loc1", locationName: "Main Warehouse", quantity: 15 },
-      { locationId: "loc5", locationName: "Electronics Lab", quantity: 30 },
-    ],
-    totalStock: 45,
-    unit: "PIECE",
-    reorderPoint: 20,
-    costPrice: 8.00
-  },
-  { 
-    id: "inv8", 
-    productId: "prod8",
-    productName: "Circuit Board X2", 
-    productCode: "CBX-002",
-    category: "Electrical Components",
-    locations: [],
-    totalStock: 0,
-    unit: "PIECE",
-    reorderPoint: 15,
-    costPrice: 65.00
-  },
-];
 
 // Filter options
 const categoryFilters = [
@@ -176,23 +54,71 @@ export default function InventoryStockPage() {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [sortField, setSortField] = useState("productName");
   const [sortDirection, setSortDirection] = useState("asc");
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const response = await fetch('/api/v1/inventory');
+        if (!response.ok) throw new Error('Failed to fetch inventory');
+        const data = await response.json();
+        setInventory(data);
+      } catch (err) {
+        setError('Failed to load inventory data');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch('/api/v1/locations');
+        if (!response.ok) throw new Error('Failed to fetch locations');
+        const data = await response.json();
+        setLocations(['All Locations', ...data.map((loc: any) => loc.name)]);
+      } catch (err) {
+        console.error('Failed to load locations:', err);
+      }
+    };
+
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/v1/categories');
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(['All Categories', ...data.map((cat: any) => cat.name)]);
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    };
+
+    fetchInventory();
+    fetchLocations();
+    fetchCategories();
+  }, []);
+
   // Calculate total inventory value
-  const totalInventoryValue = mockInventory.reduce((sum, item) => {
-    return sum + (item.totalStock * item.costPrice);
-  }, 0);
+  const totalInventoryValue = useMemo(() => inventory.reduce((sum, item) => {
+    return sum + (item.quantity * (parseFloat(item.costPrice) || 0));
+  }, 0), [inventory]);
 
   // Calculate counts for KPI cards
-  const lowStockCount = mockInventory.filter(item => 
-    item.totalStock > 0 && item.totalStock <= item.reorderPoint
-  ).length;
+  const lowStockCount = useMemo(() => inventory.filter(item => 
+    item.quantity > 0 && item.quantity <= item.reorderPoint
+  ).length, [inventory]);
   
-  const outOfStockCount = mockInventory.filter(item => 
-    item.totalStock === 0
-  ).length;
+  const outOfStockCount = useMemo(() => inventory.filter(item => 
+    item.quantity === 0
+  ).length, [inventory]);
 
   // Filter and sort inventory
-  const filteredInventory = mockInventory
+  const filteredInventory = useMemo(() => 
+    inventory
     .filter((item) => {
       // Search filter
       const matchesSearch =
@@ -232,7 +158,7 @@ export default function InventoryStockPage() {
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
-    });
+    }), [inventory, searchQuery, selectedCategory, selectedLocation, selectedStockStatus, sortField, sortDirection]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -265,6 +191,28 @@ export default function InventoryStockPage() {
     
     setExpandedProducts(newExpandedProducts);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Error loading data</h2>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -369,7 +317,7 @@ export default function InventoryStockPage() {
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
-                {categoryFilters.map((category) => (
+                {categories.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
@@ -388,7 +336,7 @@ export default function InventoryStockPage() {
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
               >
-                {locationFilters.map((location) => (
+                {locations.map((location) => (
                   <option key={location} value={location}>
                     {location}
                   </option>
@@ -633,7 +581,7 @@ export default function InventoryStockPage() {
           {/* Simple Pagination */}
           <div className="flex items-center justify-between px-4 py-3 border-t">
             <div className="text-sm text-muted-foreground">
-              Showing {filteredInventory.length} of {mockInventory.length} items
+              Showing {filteredInventory.length} of {inventory.length} items
             </div>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" disabled>
