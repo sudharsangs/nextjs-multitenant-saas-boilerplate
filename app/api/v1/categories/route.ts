@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { categories } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getToken } from '@/lib/server-cookies';
+import { getAuthUser } from '@/lib/auth';
 
 const categorySchema = z.object({
   companyId: z.string(),
@@ -12,7 +13,7 @@ const categorySchema = z.object({
   parentId: z.string().optional().nullable(),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const token = getToken();
     if (!token) {
@@ -22,8 +23,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const companyId = getAuthUser(request)?.companyId;
 
     if (!companyId) {
       return NextResponse.json(

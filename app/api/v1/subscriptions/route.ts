@@ -15,8 +15,7 @@ const subscriptionSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     getAuthUser(request); // Verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
+    const requestedCompanyId = getAuthUser(request)?.companyId;
 
     if (!requestedCompanyId) {
       return NextResponse.json(
@@ -51,8 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     getAuthUser(request); // Verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
+    const requestedCompanyId = getAuthUser(request)?.companyId;
 
     if (!requestedCompanyId) {
       return NextResponse.json(
@@ -113,8 +111,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     getAuthUser(request); // Verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
+    const requestedCompanyId = getAuthUser(request)?.companyId;
 
     if (!requestedCompanyId) {
       return NextResponse.json(
@@ -158,8 +155,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     getAuthUser(request); // Verify authentication
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
+    const requestedCompanyId = getAuthUser(request)?.companyId;
 
     if (!requestedCompanyId) {
       return NextResponse.json(

@@ -74,12 +74,10 @@ export default function ProductsPage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const companyId = localStorage.getItem('companyId');
-        
         // Fetch products and categories in parallel
         const [productsResponse, categoriesResponse] = await Promise.all([
-          api.get<Product[]>(`/products?companyId=${companyId}`),
-          api.get<{ id: string; name: string; }[]>(`/categories?companyId=${companyId}`)
+          api.get<Product[]>(`/products`),
+          api.get<{ id: string; name: string; }[]>(`/categories`)
         ]);
 
         if (productsResponse.success && productsResponse.data) {

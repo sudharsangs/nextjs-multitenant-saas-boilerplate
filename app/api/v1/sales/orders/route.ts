@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { orders, orderItems, products } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getToken } from '@/lib/server-cookies';
+import { getAuthUser } from '@/lib/auth';
 
 const orderItemSchema = z.object({
   productId: z.string(),
@@ -21,7 +22,7 @@ const orderSchema = z.object({
   items: z.array(orderItemSchema),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const token = getToken();
     if (!token) {
@@ -31,8 +32,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const companyId = getAuthUser(request)?.companyId;
 
     if (!companyId) {
       return NextResponse.json(

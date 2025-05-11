@@ -81,7 +81,7 @@ export default function OnboardingPage() {
         // Fetch subscription details if company exists
         let hasSubscription = false;
         if (hasCompany && companyId) {
-          const subscriptionResponse = await fetch(`/api/v1/subscriptions?companyId=${companyId}`, {
+          const subscriptionResponse = await fetch(`/api/v1/subscriptions`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -259,7 +259,7 @@ export default function OnboardingPage() {
         }
 
         // Set up the subscription
-        const subscriptionResponse = await fetch(`/api/v1/subscriptions?companyId=${companyResult.id}`, {
+        const subscriptionResponse = await fetch(`/api/v1/subscriptions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -274,7 +274,7 @@ export default function OnboardingPage() {
         }
       } else if (flowType === FlowType.SUBSCRIPTION_ONLY) {
         // Only set up subscription for existing company
-        const subscriptionResponse = await fetch(`/api/v1/subscriptions?companyId=${companyData.id}`, {
+        const subscriptionResponse = await fetch(`/api/v1/subscriptions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

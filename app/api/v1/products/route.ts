@@ -187,7 +187,7 @@ export async function DELETE(request: Request) {
 }
 
 // Categories
-export async function GET_CATEGORIES(request: Request) {
+export async function GET_CATEGORIES(request: NextRequest) {
   try {
     const token = getToken();
     if (!token) {
@@ -197,8 +197,7 @@ export async function GET_CATEGORIES(request: Request) {
       );
     }
 
-    const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const companyId = getAuthUser(request)?.companyId;
 
     if (!companyId) {
       return NextResponse.json(

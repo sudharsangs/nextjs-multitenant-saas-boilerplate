@@ -6,7 +6,6 @@ import {
   Search, 
   Filter, 
   ArrowUpDown, 
-  MoreHorizontal, 
   AlertCircle,
   FileDown,
   Eye,
@@ -45,13 +44,11 @@ export default function SalesOrdersPage() {
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [sortField, setSortField] = useState<keyof Order>('createdAt');
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const companyId = localStorage.getItem('companyId'); // This should come from auth context
-        const response = await api.get<Order[]>(`/sales/orders?companyId=${companyId}`);
+        const response = await api.get<Order[]>(`/sales/orders`);
         
         if (response.success && response.data) {
           setOrders(response.data);
@@ -369,7 +366,7 @@ export default function SalesOrdersPage() {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

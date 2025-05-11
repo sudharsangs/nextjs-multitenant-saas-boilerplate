@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { inventory } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { cookies } from 'next/headers';
+import { getAuthUser } from '@/lib/auth';
 
 const inventorySchema = z.object({
   companyId: z.string(),
@@ -15,7 +16,7 @@ const inventorySchema = z.object({
   expiryDate: z.string().optional(),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('token')?.value;
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const companyId = getAuthUser(request)?.companyId;
     const locationId = searchParams.get('locationId');
     const productId = searchParams.get('productId');
     if (!companyId) {

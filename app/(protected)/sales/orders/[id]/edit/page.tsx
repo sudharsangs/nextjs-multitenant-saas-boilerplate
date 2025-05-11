@@ -79,16 +79,14 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const companyId = localStorage.getItem('companyId'); // This should come from auth context
-        
         // Fetch customers
-        const customersResponse = await api.get<Customer[]>(`/customers?companyId=${companyId}`);
+        const customersResponse = await api.get<Customer[]>(`/customers`);
         if (customersResponse.success && customersResponse.data) {
           setCustomers(customersResponse.data);
         }
 
         // Fetch products
-        const productsResponse = await api.get<Product[]>(`/products?companyId=${companyId}`);
+        const productsResponse = await api.get<Product[]>(`/products`);
         if (productsResponse.success && productsResponse.data) {
           setProducts(productsResponse.data);
         }
@@ -153,7 +151,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
       quantity: 1,
       unitPrice: 0
     };
-    
+
     setFormData(prev => ({
       ...prev,
       items: [...prev.items, newItem]
@@ -167,13 +165,13 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     }));
   };
 
-  const handleItemChange = (itemId: string, field: keyof OrderItem, value: any) => {
+  const handleItemChange = (itemId: string, field: keyof OrderItem, value: string | number | Product | undefined) => {
     setFormData(prev => ({
       ...prev,
       items: prev.items.map(item => {
         if (item.id === itemId) {
           const updatedItem = { ...item, [field]: value };
-          
+
           // If changing product, update product details
           if (field === 'productId') {
             const product = products.find(p => p.id === value);
@@ -181,7 +179,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
               updatedItem.product = product;
             }
           }
-          
+
           return updatedItem;
         }
         return item;
@@ -200,14 +198,12 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     setError(null);
 
     try {
-      const companyId = localStorage.getItem('companyId'); // This should come from auth context
       const payload = {
         ...formData,
-        companyId
       };
 
       const response = await api.put(`/sales/orders/${id}`, payload);
-      
+
       if (response.success) {
         router.push(`/sales/orders/${id}`);
       } else {
@@ -246,9 +242,9 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => router.push(`/sales/orders/${id}`)}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -368,7 +364,7 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {formData.items.map((item, index) => (
+              {formData.items.map((item) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-5">
                     <select

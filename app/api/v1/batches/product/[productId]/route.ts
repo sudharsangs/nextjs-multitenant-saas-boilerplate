@@ -12,8 +12,7 @@ export async function GET(
   try {
     const { companyId } = getAuthUser(request);
     const productId = params.productId;
-    const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
+    const requestedCompanyId = getAuthUser(request)?.companyId;
 
     if (!requestedCompanyId) {
       return NextResponse.json(

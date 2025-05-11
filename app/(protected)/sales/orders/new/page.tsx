@@ -64,17 +64,15 @@ export default function NewOrderPage() {
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      try {
-        const companyId = localStorage.getItem('companyId'); // This should come from auth context
-        
+      try {        
         // Fetch customers
-        const customersResponse = await api.get<Customer[]>(`/customers?companyId=${companyId}`);
+        const customersResponse = await api.get<Customer[]>(`/customers`);
         if (customersResponse.success && customersResponse.data) {
           setCustomers(customersResponse.data);
         }
 
         // Fetch products
-        const productsResponse = await api.get<Product[]>(`/products?companyId=${companyId}`);
+        const productsResponse = await api.get<Product[]>(`/products`);
         if (productsResponse.success && productsResponse.data) {
           setProducts(productsResponse.data);
         }
@@ -133,7 +131,7 @@ export default function NewOrderPage() {
     }));
   };
 
-  const handleItemChange = (itemId: string, field: keyof OrderItem, value: any) => {
+  const handleItemChange = (itemId: string, field: keyof OrderItem, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       items: prev.items.map(item => {
@@ -166,16 +164,14 @@ export default function NewOrderPage() {
     setError(null);
 
     try {
-      const companyId = localStorage.getItem('companyId'); // This should come from auth context
       const payload = {
         ...formData,
-        companyId,
         status: 'DRAFT'
       };
 
       const response = await api.post('/sales/orders', payload);
       
-      if (response.success) {
+      if (response.success && response.data && typeof response.data === 'object' && 'id' in response.data) {
         router.push(`/sales/orders/${response.data.id}`);
       } else {
         throw new Error(response.error || 'Failed to create order');
@@ -327,7 +323,7 @@ export default function NewOrderPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {formData.items.map((item, index) => (
+              {formData.items.map((item) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-5">
                     <select

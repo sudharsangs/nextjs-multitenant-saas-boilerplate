@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const { companyId } = getAuthUser(request);
     const { searchParams } = new URL(request.url);
-    const requestedCompanyId = searchParams.get('companyId');
+    const requestedCompanyId = getAuthUser(request)?.companyId;
     const locationId = searchParams.get('locationId');
     const productId = searchParams.get('productId');
     

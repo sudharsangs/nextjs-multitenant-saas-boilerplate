@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/db';
 import { batches } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getToken } from '@/lib/server-cookies';
+import { getAuthUser } from '@/lib/auth';
 
 const batchSchema = z.object({
   companyId: z.string(),
@@ -15,7 +16,7 @@ const batchSchema = z.object({
   status: z.enum(['ACTIVE', 'EXPIRED', 'RECALLED']).default('ACTIVE'),
 });
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const token = getToken();
     if (!token) {
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const companyId = searchParams.get('companyId');
+    const companyId = getAuthUser(request)?.companyId;
     const productId = searchParams.get('productId');
 
     if (!companyId) {

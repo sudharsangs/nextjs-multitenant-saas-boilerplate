@@ -35,8 +35,7 @@ export default function CategoriesPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const companyId = localStorage.getItem('companyId'); // We'll need to handle this properly
-        const response = await api.get<Category[]>(`/categories?companyId=${companyId}`);
+        const response = await api.get<Category[]>(`/categories`);
         
         if (response.success && response.data) {
           setCategories(response.data);
