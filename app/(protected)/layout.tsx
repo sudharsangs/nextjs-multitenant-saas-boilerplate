@@ -39,7 +39,7 @@ export default function ProtectedLayout({
                     };
                     
                     // Check if user has a company, if not redirect to onboarding
-                    if (!userData.user.companyId || !userData.company) {
+                    if (!userData.user.companyId || !userData.company || !userData.subscription) {
                         router.push('/onboarding');
                         return;
                     }

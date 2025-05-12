@@ -151,6 +151,13 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
         icon: <ReceiptIndianRupee />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
+      },
+      {
+        title: "Quotes",
+        href: "/sales/quotes",
+        icon: <BadgeIndianRupee />,
+        roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
+        subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       }
     ],
     href: "/sales",

@@ -5,6 +5,8 @@ import { companies, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getAuthUser } from '@/lib/auth';
 import type { NextRequest } from 'next/server';
+import { signJwt } from '@/lib/jwt';
+import { cookies } from 'next/headers';
 
 const companySchema = z.object({
   name: z.string().min(2),
@@ -16,7 +18,7 @@ const companySchema = z.object({
   pincode: z.string(),
   phone: z.string(),
   email: z.string().email(),
-  website: z.string().url().optional(),
+  website: z.string().url().optional().nullable(),
   billingAddress: z.string().optional(),
   logo: z.string().optional(),
   theme: z.string().optional(),
@@ -99,6 +101,23 @@ export async function POST(request: NextRequest) {
       .update(users)
       .set({ companyId: company.id })
       .where(eq(users.id, userId));
+
+    // Generate a new token with updated company ID
+    const token = await signJwt({
+      userId,
+      companyId: company.id,
+    });
+
+    // Set the new token in cookies
+    cookies().set({
+      name: 'token',
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
 
     return NextResponse.json(company);
   } catch (err) {

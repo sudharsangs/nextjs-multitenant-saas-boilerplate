@@ -8,7 +8,6 @@ import { verifyJwt } from '@/lib/jwt';
 export async function GET() {
   try {
     const token = await getToken();;
-    console.log('Token in me', token);
     if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized' },

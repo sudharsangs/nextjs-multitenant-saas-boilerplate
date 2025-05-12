@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies';
 
 export async function getToken(): Promise<string | undefined> {
-  const cookieStore: ReadonlyRequestCookies = cookies();
+  const cookieStore: ReadonlyRequestCookies = await cookies();
   const token = await cookieStore.get('token');
   return token?.value;
 }

@@ -387,7 +387,7 @@ export default function ProductsPage() {
                         {product.code}
                       </td>
                       <td className="py-3 px-4 text-sm">
-                        {product.category.name}
+                        {product.category?.name}
                       </td>
                       <td className="py-3 px-4 text-sm">
                         <div className={
@@ -397,14 +397,14 @@ export default function ProductsPage() {
                             ? "text-amber-500 font-medium"
                             : ""
                         }>
-                          {product.totalStock.toLocaleString()}
+                          {product?.totalStock?.toLocaleString()}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-sm">
                         {product.unit === "PIECE" ? "Piece" : product.unit}
                       </td>
                       <td className="py-3 px-4 text-sm">
-                        {product.reorderPoint.toLocaleString()}
+                        {product?.reorderPoint?.toLocaleString()}
                       </td>
                       <td className="py-3 px-4">
                         <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
