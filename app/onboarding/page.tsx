@@ -51,7 +51,8 @@ export default function OnboardingPage() {
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>({
     plan: 'FREE',
     paymentMethod: 'credit',
-    isAutoRenew: true
+    isAutoRenew: true,
+    duration: 'monthly'
   });
 
   // Fetch user's company and subscription data on page load

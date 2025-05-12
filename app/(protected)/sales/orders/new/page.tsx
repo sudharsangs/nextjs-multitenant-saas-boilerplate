@@ -224,21 +224,31 @@ export default function NewOrderPage() {
                 <label htmlFor="customerId" className="text-sm font-medium">
                   Customer <span className="text-red-500">*</span>
                 </label>
-                <select
-                  id="customerId"
-                  name="customerId"
-                  value={formData.customerId}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  required
-                >
-                  <option value="">Select a customer</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    id="customerId"
+                    name="customerId"
+                    value={formData.customerId}
+                    onChange={handleChange}
+                    className="flex-1 rounded-md border border-input bg-background px-3 py-2"
+                    required
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => router.push('/sales/customers/new')}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">

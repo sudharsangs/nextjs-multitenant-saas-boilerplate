@@ -5,15 +5,15 @@ export interface StepProps {
 }
 
 export interface SubscriptionData {
-    plan: 'FREE' | 'BASIC' | 'PRO';
+    plan: 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE';
     paymentMethod: string;
     isAutoRenew: boolean;
-    id?: string;
+    duration: 'monthly' | 'quarterly' | 'half-yearly' | 'annual';
 }
 
 export interface CompanyData {
   name: string;
-  gstin?: string;
+  gstin: string;
   email: string;
   phone: string;
   address: string;
@@ -21,10 +21,9 @@ export interface CompanyData {
   state: string;
   country: string;
   pincode: string;
-  website?: string;
-  billingAddress?: string;
-  logo?: string;
+  website: string;
+  billingAddress: string;
+  logo: string;
   theme: string;
-  settings: Record<string, object>;
-  id?: string; // Added ID field for existing companies
+  settings: Record<string, unknown>;
 }

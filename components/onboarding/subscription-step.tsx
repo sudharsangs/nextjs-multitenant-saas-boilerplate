@@ -1,19 +1,86 @@
 import { SubscriptionData } from "./types";
 
 interface Props {
-    subscriptionData: SubscriptionData;
-    setSubscriptionData: React.Dispatch<React.SetStateAction<SubscriptionData>>;
-    error: string;
-  }
+  subscriptionData: SubscriptionData;
+  setSubscriptionData: React.Dispatch<React.SetStateAction<SubscriptionData>>;
+  error: string;
+}
 
 export const SubscriptionStep = ({
   subscriptionData,
   setSubscriptionData,
   error,
 }: Props) => {
+  const getDurationMultiplier = (duration: string) => {
+    switch (duration) {
+      case 'annual': return 10; // 2 months free
+      case 'half-yearly': return 5.5; // 0.5 month free
+      case 'quarterly': return 2.85; // 5% discount
+      case 'monthly':
+      default:
+        return 1;
+    }
+  };
+
+  const getPrice = (basePrice: number) => {
+    const multiplier = getDurationMultiplier(subscriptionData.duration);
+    return Math.round(basePrice * multiplier);
+  };
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-medium">Choose Your Plan</h3>
+      
+      <div className="flex justify-center space-x-4 mb-6">
+        <button
+          type="button"
+          className={`px-4 py-2 rounded-md ${
+            subscriptionData.duration === 'annual' 
+              ? 'bg-primary text-white' 
+              : 'bg-secondary text-foreground'
+          }`}
+          onClick={() => setSubscriptionData({ ...subscriptionData, duration: 'annual' })}
+        >
+          Annual
+          <span className="block text-xs">Save 16%</span>
+        </button>
+        <button
+          type="button"
+          className={`px-4 py-2 rounded-md ${
+            subscriptionData.duration === 'half-yearly' 
+              ? 'bg-primary text-white' 
+              : 'bg-secondary text-foreground'
+          }`}
+          onClick={() => setSubscriptionData({ ...subscriptionData, duration: 'half-yearly' })}
+        >
+          Half Yearly
+          <span className="block text-xs">Save 8%</span>
+        </button>
+        <button
+          type="button"
+          className={`px-4 py-2 rounded-md ${
+            subscriptionData.duration === 'quarterly' 
+              ? 'bg-primary text-white' 
+              : 'bg-secondary text-foreground'
+          }`}
+          onClick={() => setSubscriptionData({ ...subscriptionData, duration: 'quarterly' })}
+        >
+          Quarterly
+          <span className="block text-xs">Save 5%</span>
+        </button>
+        <button
+          type="button"
+          className={`px-4 py-2 rounded-md ${
+            subscriptionData.duration === 'monthly' 
+              ? 'bg-primary text-white' 
+              : 'bg-secondary text-foreground'
+          }`}
+          onClick={() => setSubscriptionData({ ...subscriptionData, duration: 'monthly' })}
+        >
+          Monthly
+        </button>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-3">
         <div 
           className={`border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors ${
@@ -22,7 +89,9 @@ export const SubscriptionStep = ({
           onClick={() => setSubscriptionData({ ...subscriptionData, plan: 'FREE' })}
         >
           <h4 className="text-lg font-medium">Free</h4>
-          <p className="text-2xl font-bold mt-2">₹0<span className="text-sm font-normal">/month</span></p>
+          <p className="text-2xl font-bold mt-2">₹0
+            <span className="text-sm font-normal">/{subscriptionData.duration.replace('-', ' ')}</span>
+          </p>
           <ul className="mt-4 space-y-2 text-sm">
             <li>• Basic inventory management</li>
             <li>• Up to 100 products</li>
@@ -38,7 +107,9 @@ export const SubscriptionStep = ({
           onClick={() => setSubscriptionData({ ...subscriptionData, plan: 'BASIC' })}
         >
           <h4 className="text-lg font-medium">Basic</h4>
-          <p className="text-2xl font-bold mt-2">₹999<span className="text-sm font-normal">/month</span></p>
+          <p className="text-2xl font-bold mt-2">₹{getPrice(999)}
+            <span className="text-sm font-normal">/{subscriptionData.duration.replace('-', ' ')}</span>
+          </p>
           <ul className="mt-4 space-y-2 text-sm">
             <li>• Full inventory management</li>
             <li>• Up to 1,000 products</li>
@@ -55,7 +126,9 @@ export const SubscriptionStep = ({
           onClick={() => setSubscriptionData({ ...subscriptionData, plan: 'PRO' })}
         >
           <h4 className="text-lg font-medium">Pro</h4>
-          <p className="text-2xl font-bold mt-2">₹2,499<span className="text-sm font-normal">/month</span></p>
+          <p className="text-2xl font-bold mt-2">₹{getPrice(2499)}
+            <span className="text-sm font-normal">/{subscriptionData.duration.replace('-', ' ')}</span>
+          </p>
           <ul className="mt-4 space-y-2 text-sm">
             <li>• Advanced inventory management</li>
             <li>• Unlimited products</li>

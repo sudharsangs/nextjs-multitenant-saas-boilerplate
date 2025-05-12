@@ -265,21 +265,31 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
                 <label htmlFor="customerId" className="text-sm font-medium">
                   Customer <span className="text-red-500">*</span>
                 </label>
-                <select
-                  id="customerId"
-                  name="customerId"
-                  value={formData.customerId}
-                  onChange={handleChange}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  required
-                >
-                  <option value="">Select a customer</option>
-                  {customers.map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex gap-2">
+                  <select
+                    id="customerId"
+                    name="customerId"
+                    value={formData.customerId}
+                    onChange={handleChange}
+                    className="flex-1 rounded-md border border-input bg-background px-3 py-2"
+                    required
+                  >
+                    <option value="">Select a customer</option>
+                    {customers.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => router.push('/sales/customers/new')}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -360,26 +370,36 @@ export default function EditOrderPage({ params }: { params: { id: string } }) {
         <Card>
           <CardHeader>
             <CardTitle>Order Items</CardTitle>
-            <CardDescription>Add or modify products in this order</CardDescription>
+            <CardDescription>Add products to this order</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {formData.items.map((item) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-5">
-                    <select
-                      value={item.productId}
-                      onChange={(e) => handleItemChange(item.id, 'productId', e.target.value)}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2"
-                      required
-                    >
-                      <option value="">Select a product</option>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name} ({product.code})
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex gap-2">
+                      <select
+                        value={item.productId}
+                        onChange={(e) => handleItemChange(item.id, 'productId', e.target.value)}
+                        className="flex-1 rounded-md border border-input bg-background px-3 py-2"
+                        required
+                      >
+                        <option value="">Select a product</option>
+                        {products.map((product) => (
+                          <option key={product.id} value={product.id}>
+                            {product.name} ({product.code})
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => router.push('/inventory/products/new')}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="col-span-2">
                     <input

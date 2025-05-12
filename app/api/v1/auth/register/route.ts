@@ -12,12 +12,13 @@ const registerSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     companyId: z.string().optional().nullable(),
+    role: z.string().optional().nullable(),
 });
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, email, password, companyId } = registerSchema.parse(body);
+        const { name, email, password, companyId, role } = registerSchema.parse(body);
 
         const existingUser = await db
             .select()
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
                 password: hashedPassword,
                 companyId: companyId || null,
                 isActive: true,
+                role: (role as "ADMIN" | "MANAGER" | "STAFF" | "VIEWER") ?? "ADMIN"
             })
             .returning();
 

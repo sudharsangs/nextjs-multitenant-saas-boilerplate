@@ -21,6 +21,7 @@ export const notificationStatusEnum = pgEnum('notification_status', ['UNREAD', '
 export const auditActionEnum = pgEnum('audit_action', ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'EXPORT', 'IMPORT']);
 export const integrationTypeEnum = pgEnum('integration_type', ['PAYMENT_GATEWAY', 'EMAIL', 'SMS', 'ERP', 'CRM', 'CUSTOM']);
 export const integrationStatusEnum = pgEnum('integration_status', ['ACTIVE', 'INACTIVE', 'ERROR', 'PENDING']);
+export const subscriptionDurationEnum = pgEnum('subscription_duration', ['monthly', 'quarterly', 'half-yearly', 'annual']);
 
 // Company Management
 export const companies = pgTable('companies', {
@@ -148,7 +149,7 @@ export const subscriptions = pgTable('subscriptions', {
   endDate: timestamp('end_date').notNull(),
   trialEndDate: timestamp('trial_end_date'),
   trialDays: integer('trial_days').default(14),
-  billingCycle: text('billing_cycle').default('MONTHLY').notNull(),
+  duration: subscriptionDurationEnum('duration').default('monthly').notNull(),
   maxUsers: integer('max_users').notNull(),
   maxStorage: integer('max_storage').notNull(),
   features: json('features').notNull(),

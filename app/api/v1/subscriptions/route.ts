@@ -10,6 +10,7 @@ const subscriptionSchema = z.object({
   plan: z.enum(['FREE', 'BASIC', 'PRO', 'ENTERPRISE']),
   paymentMethod: z.string(),
   isAutoRenew: z.boolean(),
+  duration: z.enum(['monthly', 'quarterly', 'half-yearly', 'annual']),
 });
 
 export async function GET(request: NextRequest) {

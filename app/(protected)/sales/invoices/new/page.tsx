@@ -641,7 +641,6 @@ export default function NewInvoicePage() {
           // Edit Mode
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Main invoice information */}
               <div className="lg:col-span-2 space-y-6">
                 <Card>
                   <CardHeader>
@@ -656,21 +655,31 @@ export default function NewInvoicePage() {
                         <label htmlFor="customer" className="text-sm font-medium">
                           Customer <span className="text-red-500">*</span>
                         </label>
-                        <select
-                          id="customer"
-                          name="customer"
-                          value={formData.customer}
-                          onChange={handleChange}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2"
-                          required
-                        >
-                          <option value="">Select a customer</option>
-                          {mockCustomers.map((customer) => (
-                            <option key={customer.id} value={customer.id}>
-                              {customer.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex gap-2">
+                          <select
+                            id="customerId"
+                            name="customerId"
+                            value={formData.customerId}
+                            onChange={handleChange}
+                            className="flex-1 rounded-md border border-input bg-background px-3 py-2"
+                            required
+                          >
+                            <option value="">Select a customer</option>
+                            {mockCustomers.map((customer) => (
+                              <option key={customer.id} value={customer.id}>
+                                {customer.name}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => router.push('/sales/customers/new')}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="invoiceNumber" className="text-sm font-medium">
@@ -785,19 +794,30 @@ export default function NewInvoicePage() {
                                 <label htmlFor={`item-product-${index}`} className="text-sm font-medium">
                                   Product
                                 </label>
-                                <select
-                                  id={`item-product-${index}`}
-                                  value={item.productId}
-                                  onChange={(e) => handleItemChange(item.id, 'productId', e.target.value)}
-                                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                                >
-                                  <option value="">Select a product</option>
-                                  {mockProducts.map((product) => (
-                                    <option key={product.id} value={product.id}>
-                                      {product.name} ({product.code})
-                                    </option>
-                                  ))}
-                                </select>
+                                <div className="flex gap-2">
+                                  <select
+                                    id={`item-product-${index}`}
+                                    value={item.productId}
+                                    onChange={(e) => handleItemChange(item.id, 'productId', e.target.value)}
+                                    className="flex-1 rounded-md border border-input bg-background px-3 py-2"
+                                    required
+                                  >
+                                    <option value="">Select a product</option>
+                                    {mockProducts.map((product) => (
+                                      <option key={product.id} value={product.id}>
+                                        {product.name} ({product.code})
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => router.push('/inventory/products/new')}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                               <div className="space-y-2">
                                 <label htmlFor={`item-description-${index}`} className="text-sm font-medium">
