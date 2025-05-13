@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     // Create quote with proper schema fields
     const [quote] = await db.insert(quotes).values({
-      company_id: user.companyId,
+      companyId: user.companyId,
       quoteNumber: quoteNumber,
       customerId: validatedData.customerId,
       status: 'DRAFT',

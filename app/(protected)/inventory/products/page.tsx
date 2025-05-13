@@ -6,14 +6,9 @@ import {
   Search, 
   Plus, 
   Filter, 
-  MoreHorizontal,
   ArrowUpDown, 
-  Edit, 
-  Trash,
   FileDown,
-  FileUp,
-  Package
-} from "lucide-react";
+  FileUp} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -22,6 +17,7 @@ import {
   CardContent
 } from "@/components/ui/card";
 import { api } from "@/lib/api-client";
+import ProductsTable from "@/components/products/table";
 
 interface Product {
   id: string;
@@ -70,8 +66,7 @@ export default function ProductsPage() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [actionProductId, setActionProductId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+   const fetchData = async () => {
       setIsLoading(true);
       try {
         // Fetch products and categories in parallel
@@ -96,6 +91,7 @@ export default function ProductsPage() {
       }
     };
 
+  useEffect(() => { 
     fetchData();
   }, []);
 
@@ -297,161 +293,14 @@ export default function ProductsPage() {
         {/* Products Table */}
         <div className="rounded-md border bg-card">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted/50">
-                <tr className="border-b">
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("name")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Product Name
-                      {renderSortIcon("name")}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("code")}
-                  >
-                    <div className="flex items-center gap-1">
-                      SKU/Code
-                      {renderSortIcon("code")}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("category")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Category
-                      {renderSortIcon("category")}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("totalStock")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Stock
-                      {renderSortIcon("totalStock")}
-                    </div>
-                  </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
-                  >
-                    Unit
-                  </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
-                  >
-                    Reorder Point
-                  </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("status")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Status
-                      {renderSortIcon("status")}
-                    </div>
-                  </th>
-                  <th className="py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="text-center py-8 text-muted-foreground">
-                      <div className="flex flex-col items-center justify-center">
-                        <Package size={40} className="mb-2 text-muted-foreground" />
-                        <p>No products found</p>
-                        <Button
-                          variant="link"
-                          onClick={() => router.push("/inventory/products/new")}
-                          className="mt-2"
-                        >
-                          Add your first product
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProducts.map((product) => (
-                    <tr key={product.id} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4">
-                        <div className="font-medium">{product.name}</div>
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        {product.code}
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        {product.category?.name}
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        <div className={
-                          product.totalStock === 0
-                            ? "text-destructive font-medium"
-                            : product.totalStock < product.reorderPoint
-                            ? "text-amber-500 font-medium"
-                            : ""
-                        }>
-                          {product?.totalStock?.toLocaleString()}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        {product.unit === "PIECE" ? "Piece" : product.unit}
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        {product?.reorderPoint?.toLocaleString()}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                          ${product.status === "Active" ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : ""}
-                          ${product.status === "Inactive" ? "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400" : ""}
-                          ${product.status === "Low Stock" ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" : ""}
-                          ${product.status === "Out of Stock" ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" : ""}
-                        `}>
-                          {product.status}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right relative">
-                        <div className="flex justify-end">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleActionClick(product.id)}
-                          >
-                            <MoreHorizontal size={16} />
-                          </Button>
-                          {actionProductId === product.id && (
-                            <div className="absolute right-4 top-10 z-50 rounded-md border border-border bg-card shadow-md w-36">
-                              <div className="p-1">
-                                <button
-                                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent text-left"
-                                  onClick={() => router.push(`/inventory/products/${product.id}`)}
-                                >
-                                  <Edit size={14} />
-                                  Edit
-                                </button>
-                                <button
-                                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm hover:bg-accent text-left text-destructive hover:text-destructive"
-                                  onClick={() => handleDelete(product.id)}
-                                >
-                                  <Trash size={14} />
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <ProductsTable 
+            products={products} 
+            handleActionClick={handleActionClick}
+            handleSort={handleSort}
+            renderSortIcon={renderSortIcon}
+            handleDelete={handleDelete}
+            actionProductId={actionProductId}
+            />
           </div>
           
           {/* Simple Pagination */}
