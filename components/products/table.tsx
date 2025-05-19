@@ -35,14 +35,15 @@ interface Props {
   renderSortIcon: (field: string) => JSX.Element;
   handleSort: (field: string) => void;
   handleDelete: (productId: string) => Promise<void>;
+  actionProductId?: string | null;
+  handleActionClick?: (productId: string) => void;
 }
 
 export default function ProductsTable({ 
     products,
     renderSortIcon,
     handleSort,
-    handleDelete
-}: Props) {
+    handleDelete}: Props) {
   const router = useRouter();
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
 

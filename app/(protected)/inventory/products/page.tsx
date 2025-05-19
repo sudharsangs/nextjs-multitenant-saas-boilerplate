@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/card";
 import { api } from "@/lib/api-client";
 import ProductsTable from "@/components/products/table";
+// Import the Excel utilities and import modal
+import { exportToExcel, ExcelColumn } from "@/lib/excel-utils";
+import ImportModal from "@/components/shared/import-modal";
 
 interface Product {
   id: string;
@@ -56,7 +59,7 @@ const statusFilters = [
 export default function ProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [, setCategories] = useState<{ id: string; name: string; }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,6 +68,8 @@ export default function ProductsPage() {
   const [sortField, setSortField] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
   const [actionProductId, setActionProductId] = useState<string | null>(null);
+  // Add state for import/export modals
+  const [showImportModal, setShowImportModal] = useState(false);
 
    const fetchData = async () => {
       setIsLoading(true);
@@ -107,6 +112,94 @@ export default function ProductsPage() {
       console.error('Error deleting product:', error);
     }
     setActionProductId(null);
+  };
+
+  // Add handleExport function
+  const handleExport = async () => {
+    try {
+      // Define columns for Excel export
+      const columns: ExcelColumn[] = [
+        { header: 'Product Name', key: 'name', width: 30 },
+        { header: 'Product Code', key: 'code', width: 15 },
+        { header: 'Category', key: 'categoryName', width: 20 },
+        { header: 'Total Stock', key: 'totalStock', width: 12 },
+        { header: 'Unit', key: 'unit', width: 10 },
+        { header: 'Reorder Point', key: 'reorderPoint', width: 15 },
+        { header: 'Status', key: 'status', width: 15 },
+      ];
+
+      // Prepare data for export with proper category name
+      const exportData = filteredProducts.map(product => ({
+        name: product.name,
+        code: product.code,
+        categoryName: product.category.name,
+        totalStock: product.totalStock,
+        unit: product.unit,
+        reorderPoint: product.reorderPoint,
+        status: product.status,
+      }));
+
+      // Export to Excel
+      await exportToExcel(exportData, columns, 'products_export.xlsx');
+    } catch (error) {
+      console.error('Error exporting products:', error);
+    }
+  };
+
+  // Add handleImport function
+  const handleImport = async (data: Record<string, unknown>[]) => {
+    try {
+      // Validate data
+      if (!data || data.length === 0) {
+        throw new Error('No valid data found in the import file');
+      }
+      
+      // Check required fields
+      const missingFields: string[] = [];
+      data.forEach((item, index) => {
+        if (!item.name) missingFields.push(`Row ${index + 1}: Missing Product Name`);
+        if (!item.code) missingFields.push(`Row ${index + 1}: Missing Product Code`);
+      });
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Validation errors:\n${missingFields.join('\n')}`);
+      }
+      
+      // Process the imported data
+      const importedProducts = data.map(item => {
+        // Find category ID by name
+        const categoryName = String(item.categoryName || '');
+        const category = categories.find(cat => cat.name === categoryName);
+        
+        // Use default category if not found
+        const defaultCategoryId = categories.length > 0 ? categories[0].id : '';
+        
+        return {
+          name: String(item.name || ''),
+          code: String(item.code || ''),
+          categoryId: category?.id || defaultCategoryId,
+          totalStock: parseInt(String(item.totalStock || '0')),
+          unit: String(item.unit || 'PIECE'),
+          reorderPoint: parseInt(String(item.reorderPoint || '0')),
+          status: String(item.status || 'Active'),
+          // Additional fields as needed
+        };
+      });
+
+      // Create a batch import request
+      const response = await api.post('/products/batch', { products: importedProducts });
+      
+      if (response.success) {
+        // Refresh products list
+        fetchData();
+        return Promise.resolve();
+      } else {
+        throw new Error(response.error || 'Failed to import products');
+      }
+    } catch (error) {
+      console.error('Error importing products:', error);
+      throw error;
+    }
   };
 
   // Filter and sort products
@@ -167,6 +260,17 @@ export default function ProductsPage() {
   const handleActionClick = (productId: string) => {
     setActionProductId(actionProductId === productId ? null : productId);
   };
+
+  // Define template columns for import
+  const importTemplateColumns = [
+    { header: 'Product Name', key: 'name' },
+    { header: 'Product Code', key: 'code' },
+    { header: 'Category', key: 'categoryName' },
+    { header: 'Total Stock', key: 'totalStock' },
+    { header: 'Unit', key: 'unit' },
+    { header: 'Reorder Point', key: 'reorderPoint' },
+    { header: 'Status', key: 'status' },
+  ];
 
   if (isLoading) {
     return (
@@ -278,11 +382,21 @@ export default function ProductsPage() {
 
             {/* Import/Export Buttons */}
             <div className="flex items-end gap-2 justify-end">
-              <Button variant="outline" size="sm" className="flex gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex gap-1"
+                onClick={() => setShowImportModal(true)}
+              >
                 <FileUp size={14} />
                 Import
               </Button>
-              <Button variant="outline" size="sm" className="flex gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex gap-1"
+                onClick={handleExport}
+              >
                 <FileDown size={14} />
                 Export
               </Button>
@@ -319,6 +433,16 @@ export default function ProductsPage() {
           </div>
         </div>
       </main>
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImport}
+        title="Import Products"
+        description="Upload an Excel file with product data. The file should have columns for name, code, category, stock, etc."
+        templateColumns={importTemplateColumns}
+      />
     </div>
   );
 }
