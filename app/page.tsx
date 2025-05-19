@@ -1,15 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Package, AlertTriangle, ShoppingCart, IndianRupee, Plus, Package2, Tags, Boxes, Warehouse, LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Dashboard overview card component
-const OverviewCard = ({ title, value, icon, bgColor }: { 
+const OverviewCard = ({ title, value, icon: Icon, bgColor }: { 
   title: string;
   value: string;
-  icon: string;
+  icon: LucideIcon;
   bgColor: string;
 }) => (
   <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
@@ -19,99 +20,116 @@ const OverviewCard = ({ title, value, icon, bgColor }: {
         <h3 className="text-2xl font-bold mt-1">{value}</h3>
       </div>
       <div className={`rounded-full p-2 ${bgColor}`}>
-        <Image
-          src={icon}
-          alt={`${title} icon`}
-          width={24} 
-          height={24}
-          className="dark:invert"
-        />
+        <Icon className="h-6 w-6" />
       </div>
     </div>
   </div>
 );
 
 // Quick action button component
-const QuickActionButton = ({ title, href, icon }: {
+const QuickActionButton = ({ title, href, icon: Icon }: {
   title: string;
   href: string;
-  icon: string;
+  icon: LucideIcon;
 }) => (
   <Link 
     href={href}
     className="flex items-center gap-3 p-4 hover:bg-secondary/50 rounded-md transition-colors"
   >
     <div className="bg-background rounded-full p-2 border border-border shadow-sm">
-      <Image
-        src={icon}
-        alt={`${title} icon`}
-        width={20}
-        height={20}
-        className="dark:invert"
-      />
+      <Icon className="h-5 w-5" />
     </div>
     <span className="font-medium">{title}</span>
   </Link>
 );
 
+interface Activity {
+  id: string;
+  action: string;
+  user: string;
+  time: string;
+  status: string;
+  type: 'order' | 'stock' | 'purchase' | 'user';
+}
+
 export default function Home() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [overview, setOverview] = useState({
+    totalProducts: 0,
+    lowStockItems: 0,
+    pendingOrders: 0,
+    monthlyRevenue: 0
+  });
+  const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
       try {
         const response = await fetch("/api/v1/auth/me");
         if (response.ok) {
           setIsAuthenticated(true);
+          // Fetch dashboard data
+          await Promise.all([
+            fetchDashboardOverview(),
+            fetchRecentActivities()
+          ]);
         } else {
           setIsAuthenticated(false);
-          // Redirect to login after a short delay
           setTimeout(() => {
             router.push("/auth/login");
           }, 1500);
         }
-      } catch  {
+      } catch {
         setIsAuthenticated(false);
         setTimeout(() => {
           router.push("/auth/login");
         }, 1500);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkAuth();
   }, [router]);
 
-  // Show loading state
-  if (isAuthenticated === null) {
+  const fetchDashboardOverview = async () => {
+    try {
+      const response = await fetch("/api/v1/dashboard/overview");
+      if (response.ok) {
+        const data = await response.json();
+        setOverview(data);
+      }
+    } catch (error) {
+      console.error("Error fetching overview:", error);
+    }
+  };
+
+  const fetchRecentActivities = async () => {
+    try {
+      const response = await fetch("/api/v1/dashboard/activities");
+      if (response.ok) {
+        const data = await response.json();
+        setActivities(data);
+      }
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+    }
+  };
+
+  if (isLoading || isAuthenticated === null) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <Image
-          src="/logo.svg" // Replace with your logo
-          alt="FactoStack Logo"
-          width={180}
-          height={38}
-          className="mb-8 dark:invert"
-          priority
-        />
-        <p className="text-lg text-muted-foreground">Loading your dashboard...</p>
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-primary"></div>
+        <p className="text-lg text-muted-foreground mt-4">Loading your dashboard...</p>
       </div>
     );
   }
 
-  // Show redirect message if not authenticated
   if (isAuthenticated === false) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <Image
-          src="/logo.svg" // Replace with your logo
-          alt="FactoStack Logo"
-          width={180}
-          height={38}
-          className="mb-8 dark:invert"
-          priority
-        />
         <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
         <p className="text-muted-foreground mb-4">Redirecting to login page...</p>
         <Link 
@@ -124,39 +142,20 @@ export default function Home() {
     );
   }
 
-  // Main dashboard view for authenticated users
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border">
         <div className="container mx-auto py-4 px-4 flex justify-between items-center">
           <div className="flex items-center gap-8">
-            <Image
-              src="/logo.svg" // Replace with your logo
-              alt="FactoStack Logo" 
-              width={120}
-              height={30}
-              className="dark:invert"
-              priority
-            />
+            <h1 className="text-xl font-bold">FactoStack</h1>
             <nav className="hidden md:flex gap-6">
-              <Link href="/dashboard" className="text-foreground hover:text-primary transition-colors">Dashboard</Link>
-              <Link href="/products" className="text-muted-foreground hover:text-primary transition-colors">Products</Link>
-              <Link href="/inventory" className="text-muted-foreground hover:text-primary transition-colors">Inventory</Link>
-              <Link href="/orders" className="text-muted-foreground hover:text-primary transition-colors">Orders</Link>
-              <Link href="/reports" className="text-muted-foreground hover:text-primary transition-colors">Reports</Link>
+              <Link href="/inventory" className="text-foreground hover:text-primary transition-colors">Inventory</Link>
+              <Link href="/inventory/products" className="text-muted-foreground hover:text-primary transition-colors">Products</Link>
+              <Link href="/inventory/categories" className="text-muted-foreground hover:text-primary transition-colors">Categories</Link>
+              <Link href="/inventory/batches" className="text-muted-foreground hover:text-primary transition-colors">Batches</Link>
+              <Link href="/inventory/stock" className="text-muted-foreground hover:text-primary transition-colors">Stock</Link>
             </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 rounded-full hover:bg-secondary/50">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
-              </svg>
-            </button>
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-              US
-            </div>
           </div>
         </div>
       </header>
@@ -172,26 +171,26 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <OverviewCard 
             title="Total Products" 
-            value="248" 
-            icon="/globe.svg" 
+            value={overview.totalProducts.toString()} 
+            icon={Package} 
             bgColor="bg-primary/10"
           />
           <OverviewCard 
             title="Low Stock Items" 
-            value="12" 
-            icon="/window.svg" 
+            value={overview.lowStockItems.toString()} 
+            icon={AlertTriangle} 
             bgColor="bg-destructive/10"
           />
           <OverviewCard 
             title="Pending Orders" 
-            value="36" 
-            icon="/file.svg" 
+            value={overview.pendingOrders.toString()} 
+            icon={ShoppingCart} 
             bgColor="bg-chart-1/10"
           />
           <OverviewCard 
             title="This Month Revenue" 
-            value="₹3.2L" 
-            icon="/file.svg" 
+            value={`₹${overview.monthlyRevenue.toLocaleString()}`} 
+            icon={IndianRupee} 
             bgColor="bg-chart-2/10"
           />
         </div>
@@ -202,36 +201,44 @@ export default function Home() {
           <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
             <h2 className="font-semibold mb-4">Quick Actions</h2>
             <div className="space-y-1">
-              <QuickActionButton title="Add New Product" href="/products/new" icon="/file.svg" />
-              <QuickActionButton title="Create Purchase Order" href="/purchase-orders/new" icon="/file.svg" />
-              <QuickActionButton title="Stock Adjustment" href="/inventory/adjust" icon="/window.svg" />
-              <QuickActionButton title="Generate Reports" href="/reports" icon="/globe.svg" />
+              <QuickActionButton title="Add New Product" href="/inventory/products/new" icon={Package2} />
+              <QuickActionButton title="Add New Category" href="/inventory/categories/new" icon={Tags} />
+              <QuickActionButton title="Add New Batch" href="/inventory/batches/new" icon={Boxes} />
+              <QuickActionButton title="Add New Stock" href="/inventory/stock/new" icon={Warehouse} />
             </div>
           </div>
           
           {/* Recent Activities */}
           <div className="lg:col-span-2 bg-card rounded-lg p-6 border border-border shadow-sm">
             <h2 className="font-semibold mb-4">Recent Activities</h2>
-            <div className="space-y-4">
-              {[
-                { action: "New order received", user: "Arun Kumar", time: "10 mins ago", status: "Order #54321" },
-                { action: "Low stock alert", user: "System", time: "1 hour ago", status: "5 items" },
-                { action: "Purchase order approved", user: "Priya Sharma", time: "3 hours ago", status: "PO #12345" },
-                { action: "Inventory adjusted", user: "Rahul Singh", time: "Yesterday", status: "10 items" },
-                { action: "New user added", user: "Admin", time: "Yesterday", status: "Role: Manager" }
-              ].map((activity, i) => (
-                <div key={i} className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0">
-                  <div>
-                    <p className="font-medium">{activity.action}</p>
-                    <p className="text-sm text-muted-foreground">by {activity.user}</p>
+            {activities.length > 0 ? (
+              <div className="space-y-4">
+                {activities.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium">{activity.action}</p>
+                      <p className="text-sm text-muted-foreground">by {activity.user}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm">{activity.status}</p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm">{activity.status}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No recent activities</p>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/inventory/products')}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Start Managing Inventory
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </main>

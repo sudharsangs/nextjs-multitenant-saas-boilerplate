@@ -4,8 +4,6 @@ import React, { useState } from "react";
 import { 
   Plus, 
   Search, 
-  Filter, 
-  ArrowUpDown, 
   MoreHorizontal, 
   AlertCircle,
   FileDown,
