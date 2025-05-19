@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Search, 
+  Plus, 
   Filter, 
   ArrowUpDown, 
   FileDown,
-  Box,
-  AlertCircle
+  FileUp
 } from "lucide-react";
-import { Header } from "@/components/shared/header";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -18,154 +17,190 @@ import {
   CardTitle, 
   CardContent
 } from "@/components/ui/card";
+import { api } from "@/lib/api-client";
+import { exportToExcel, ExcelColumn } from "@/lib/excel-utils";
+import ImportModal from "@/components/shared/import-modal";
+
+interface StockItem {
+  id: string;
+  productId: string;
+  product: {
+    id: string;
+    name: string;
+    code: string;
+    category: {
+      id: string;
+      name: string;
+    };
+  };
+  quantity: number;
+  location: string;
+  batchNumber: string;
+  expiryDate: string | null;
+  status: string;
+  lastUpdated: string;
+  companyId: string;
+}
 
 // Filter options
-const categoryFilters = [
-  "All Categories",
-  "Raw Materials",
-  "Finished Goods",
-  "Packaging Materials",
-  "Electrical Components",
-  "Mechanical Parts",
-];
-
 const locationFilters = [
   "All Locations",
-  "Main Warehouse",
-  "Factory Floor",
-  "Assembly Area",
-  "Packaging Station",
-  "Electronics Lab",
+  "Warehouse A",
+  "Warehouse B",
+  "Storage Room",
+  "Shelf 1",
+  "Shelf 2",
 ];
 
-const stockStatusFilters = [
+const statusFilters = [
   "All Statuses",
   "In Stock",
   "Low Stock",
   "Out of Stock",
+  "Expired",
 ];
 
-export default function InventoryStockPage() {
+export default function StockPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [selectedLocation, setSelectedLocation] = useState("All Locations");
-  const [selectedStockStatus, setSelectedStockStatus] = useState("All Statuses");
-  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
-  const [sortField, setSortField] = useState("productName");
-  const [sortDirection, setSortDirection] = useState("asc");
+  const [stockItems, setStockItems] = useState<StockItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [locations, setLocations] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("All Locations");
+  const [selectedStatus, setSelectedStatus] = useState("All Statuses");
+  const [sortField, setSortField] = useState("lastUpdated");
+  const [sortDirection, setSortDirection] = useState("desc");
+  const [showImportModal, setShowImportModal] = useState(false);
 
-  useEffect(() => {
-    const fetchInventory = async () => {
-      try {
-        const response = await fetch('/api/v1/inventory');
-        if (!response.ok) throw new Error('Failed to fetch inventory');
-        const data = await response.json();
-        setInventory(data);
-      } catch (err) {
-        setError('Failed to load inventory data');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get<StockItem[]>(`/stock`);
+      if (response.success && response.data) {
+        setStockItems(response.data);
       }
-    };
+    } catch (err) {
+      setError('Failed to load stock items');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const fetchLocations = async () => {
-      try {
-        const response = await fetch('/api/v1/locations');
-        if (!response.ok) throw new Error('Failed to fetch locations');
-        const data = await response.json();
-        setLocations(['All Locations', ...data.map((loc: any) => loc.name)]);
-      } catch (err) {
-        console.error('Failed to load locations:', err);
-      }
-    };
-
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/v1/categories');
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        const data = await response.json();
-        setCategories(['All Categories', ...data.map((cat: any) => cat.name)]);
-      } catch (err) {
-        console.error('Failed to load categories:', err);
-      }
-    };
-
-    fetchInventory();
-    fetchLocations();
-    fetchCategories();
+  useEffect(() => { 
+    fetchData();
   }, []);
 
-  // Calculate total inventory value
-  const totalInventoryValue = useMemo(() => inventory.reduce((sum, item) => {
-    return sum + (item.quantity * (parseFloat(item.costPrice) || 0));
-  }, 0), [inventory]);
+  const handleExport = async () => {
+    try {
+      const columns: ExcelColumn[] = [
+        { header: 'Product Name', key: 'productName', width: 30 },
+        { header: 'Product Code', key: 'productCode', width: 15 },
+        { header: 'Category', key: 'categoryName', width: 20 },
+        { header: 'Quantity', key: 'quantity', width: 12 },
+        { header: 'Location', key: 'location', width: 15 },
+        { header: 'Batch Number', key: 'batchNumber', width: 15 },
+        { header: 'Expiry Date', key: 'expiryDate', width: 15 },
+        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Last Updated', key: 'lastUpdated', width: 20 },
+      ];
 
-  // Calculate counts for KPI cards
-  const lowStockCount = useMemo(() => inventory.filter(item => 
-    item.quantity > 0 && item.quantity <= item.reorderPoint
-  ).length, [inventory]);
-  
-  const outOfStockCount = useMemo(() => inventory.filter(item => 
-    item.quantity === 0
-  ).length, [inventory]);
+      const exportData = stockItems.map(item => ({
+        productName: item.product.name,
+        productCode: item.product.code,
+        categoryName: item.product.category.name,
+        quantity: item.quantity,
+        location: item.location,
+        batchNumber: item.batchNumber,
+        expiryDate: item.expiryDate,
+        status: item.status,
+        lastUpdated: new Date(item.lastUpdated).toLocaleString(),
+      }));
 
-  // Filter and sort inventory
-  const filteredInventory = useMemo(() => 
-    inventory
+      await exportToExcel(exportData, columns, 'stock_export.xlsx');
+    } catch (error) {
+      console.error('Error exporting stock:', error);
+    }
+  };
+
+  const handleImport = async (data: Record<string, unknown>[]) => {
+    try {
+      if (!data || data.length === 0) {
+        throw new Error('No valid data found in the import file');
+      }
+      
+      const missingFields: string[] = [];
+      data.forEach((item, index) => {
+        if (!item.productCode) missingFields.push(`Row ${index + 1}: Missing Product Code`);
+        if (!item.quantity) missingFields.push(`Row ${index + 1}: Missing Quantity`);
+        if (!item.location) missingFields.push(`Row ${index + 1}: Missing Location`);
+      });
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Validation errors:\n${missingFields.join('\n')}`);
+      }
+      
+      const importedStock = data.map(item => ({
+        productCode: String(item.productCode),
+        quantity: parseInt(String(item.quantity || '0')),
+        location: String(item.location),
+        batchNumber: String(item.batchNumber || ''),
+        expiryDate: item.expiryDate ? new Date(String(item.expiryDate)).toISOString() : null,
+        status: String(item.status || 'In Stock'),
+      }));
+
+      const response = await api.post('/stock/batch', { stockItems: importedStock });
+      
+      if (response.success) {
+        fetchData();
+        return Promise.resolve();
+      } else {
+        throw new Error(response.error || 'Failed to import stock items');
+      }
+    } catch (error) {
+      console.error('Error importing stock:', error);
+      throw error;
+    }
+  };
+
+  const filteredStockItems = stockItems
     .filter((item) => {
-      // Search filter
       const matchesSearch =
         searchQuery === "" ||
-        item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.productCode.toLowerCase().includes(searchQuery.toLowerCase());
+        item.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.product.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.batchNumber.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Category filter
-      const matchesCategory =
-        selectedCategory === "All Categories" || item.category === selectedCategory;
-      
-      // Location filter
       const matchesLocation =
-        selectedLocation === "All Locations" || 
-        item.locations.some(loc => loc.locationName === selectedLocation);
-      
-      // Stock status filter
-      const matchesStockStatus =
-        selectedStockStatus === "All Statuses" ||
-        (selectedStockStatus === "In Stock" && item.totalStock > item.reorderPoint) ||
-        (selectedStockStatus === "Low Stock" && item.totalStock > 0 && item.totalStock <= item.reorderPoint) ||
-        (selectedStockStatus === "Out of Stock" && item.totalStock === 0);
+        selectedLocation === "All Locations" || item.location === selectedLocation;
 
-      return matchesSearch && matchesCategory && matchesLocation && matchesStockStatus;
+      const matchesStatus =
+        selectedStatus === "All Statuses" || item.status === selectedStatus;
+
+      return matchesSearch && matchesLocation && matchesStatus;
     })
     .sort((a, b) => {
-      // Sort by selected field
-      if (sortField === "totalStock" || sortField === "reorderPoint" || sortField === "costPrice") {
+      if (sortField === "quantity") {
         return sortDirection === "asc" 
-          ? a[sortField] - b[sortField] 
-          : b[sortField] - a[sortField];
+          ? a.quantity - b.quantity 
+          : b.quantity - a.quantity;
+      } else if (sortField === "lastUpdated") {
+        return sortDirection === "asc"
+          ? new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime()
+          : new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
       } else {
-        // Sort alphabetically for other fields
-        const valueA = String(a[sortField]).toLowerCase();
-        const valueB = String(b[sortField]).toLowerCase();
+        const valueA = String(a[sortField as keyof StockItem]).toLowerCase();
+        const valueB = String(b[sortField as keyof StockItem]).toLowerCase();
         return sortDirection === "asc"
           ? valueA.localeCompare(valueB)
           : valueB.localeCompare(valueA);
       }
-    }), [inventory, searchQuery, selectedCategory, selectedLocation, selectedStockStatus, sortField, sortDirection]);
+    });
 
   const handleSort = (field: string) => {
     if (sortField === field) {
-      // Toggle sort direction if clicking the same field
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      // Set new sort field and reset direction to ascending
       setSortField(field);
       setSortDirection("asc");
     }
@@ -180,17 +215,14 @@ export default function InventoryStockPage() {
     );
   };
 
-  const toggleRowExpansion = (productId: string) => {
-    const newExpandedProducts = new Set(expandedProducts);
-    
-    if (newExpandedProducts.has(productId)) {
-      newExpandedProducts.delete(productId);
-    } else {
-      newExpandedProducts.add(productId);
-    }
-    
-    setExpandedProducts(newExpandedProducts);
-  };
+  const importTemplateColumns = [
+    { header: 'Product Code', key: 'productCode' },
+    { header: 'Quantity', key: 'quantity' },
+    { header: 'Location', key: 'location' },
+    { header: 'Batch Number', key: 'batchNumber' },
+    { header: 'Expiry Date', key: 'expiryDate' },
+    { header: 'Status', key: 'status' },
+  ];
 
   if (isLoading) {
     return (
@@ -204,7 +236,7 @@ export default function InventoryStockPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Error loading data</h2>
+          <h2 className="text-2xl font-bold mb-2">Error loading stock</h2>
           <p className="text-sm text-muted-foreground mb-4">{error}</p>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Retry
@@ -218,69 +250,26 @@ export default function InventoryStockPage() {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 container mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h1 className="text-2xl font-bold">Inventory Stock</h1>
+          <h1 className="text-2xl font-bold">Stock Management</h1>
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
             <div className="relative w-full md:w-80">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <input
                 type="search"
-                placeholder="Search products..."
+                placeholder="Search stock items..."
                 className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Button
-              variant="outline"
+              onClick={() => router.push("/inventory/stock/new")}
               className="flex gap-1"
-              onClick={() => router.push("/inventory/stock/count")}
             >
-              <Box size={16} />
-              Stock Count
+              <Plus size={16} />
+              Add Stock
             </Button>
           </div>
-        </div>
-
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-sm font-medium">Total Inventory Value</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₹ {totalInventoryValue.toLocaleString('en-IN', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Based on cost price
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-amber-500">{lowStockCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Items below reorder point
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-sm font-medium">Out of Stock Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{outOfStockCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Items with zero stock
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Filters */}
@@ -295,9 +284,8 @@ export default function InventoryStockPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setSelectedCategory("All Categories");
                   setSelectedLocation("All Locations");
-                  setSelectedStockStatus("All Statuses");
+                  setSelectedStatus("All Statuses");
                   setSearchQuery("");
                 }}
               >
@@ -305,26 +293,7 @@ export default function InventoryStockPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Category Filter */}
-            <div>
-              <label htmlFor="categoryFilter" className="text-sm font-medium block mb-1">
-                Category
-              </label>
-              <select
-                id="categoryFilter"
-                className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Location Filter */}
             <div>
               <label htmlFor="locationFilter" className="text-sm font-medium block mb-1">
@@ -336,26 +305,26 @@ export default function InventoryStockPage() {
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
               >
-                {locations.map((location) => (
+                {locationFilters.map((location) => (
                   <option key={location} value={location}>
                     {location}
                   </option>
                 ))}
               </select>
             </div>
-
-            {/* Stock Status Filter */}
+            
+            {/* Status Filter */}
             <div>
-              <label htmlFor="stockStatusFilter" className="text-sm font-medium block mb-1">
-                Stock Status
+              <label htmlFor="statusFilter" className="text-sm font-medium block mb-1">
+                Status
               </label>
               <select
-                id="stockStatusFilter"
+                id="statusFilter"
                 className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                value={selectedStockStatus}
-                onChange={(e) => setSelectedStockStatus(e.target.value)}
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
               >
-                {stockStatusFilters.map((status) => (
+                {statusFilters.map((status) => (
                   <option key={status} value={status}>
                     {status}
                   </option>
@@ -363,9 +332,23 @@ export default function InventoryStockPage() {
               </select>
             </div>
 
-            {/* Export Button */}
+            {/* Import/Export Buttons */}
             <div className="flex items-end gap-2 justify-end">
-              <Button variant="outline" size="sm" className="flex gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex gap-1"
+                onClick={() => setShowImportModal(true)}
+              >
+                <FileUp size={14} />
+                Import
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex gap-1"
+                onClick={handleExport}
+              >
                 <FileDown size={14} />
                 Export
               </Button>
@@ -373,215 +356,126 @@ export default function InventoryStockPage() {
           </CardContent>
         </Card>
 
-        {/* Inventory Table */}
+        {/* Stock Table */}
         <div className="rounded-md border bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-muted/50">
+              <thead>
                 <tr className="border-b">
-                  <th className="w-10 p-3"></th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("productName")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Product Name
-                      {renderSortIcon("productName")}
-                    </div>
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => handleSort("product.name")}
+                    >
+                      Product
+                      {renderSortIcon("product.name")}
+                    </button>
                   </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("productCode")}
-                  >
-                    <div className="flex items-center gap-1">
-                      SKU/Code
-                      {renderSortIcon("productCode")}
-                    </div>
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => handleSort("quantity")}
+                    >
+                      Quantity
+                      {renderSortIcon("quantity")}
+                    </button>
                   </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("category")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Category
-                      {renderSortIcon("category")}
-                    </div>
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => handleSort("location")}
+                    >
+                      Location
+                      {renderSortIcon("location")}
+                    </button>
                   </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("totalStock")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Total Stock
-                      {renderSortIcon("totalStock")}
-                    </div>
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => handleSort("batchNumber")}
+                    >
+                      Batch Number
+                      {renderSortIcon("batchNumber")}
+                    </button>
                   </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("reorderPoint")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Reorder Point
-                      {renderSortIcon("reorderPoint")}
-                    </div>
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => handleSort("expiryDate")}
+                    >
+                      Expiry Date
+                      {renderSortIcon("expiryDate")}
+                    </button>
                   </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("unit")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Unit
-                      {renderSortIcon("unit")}
-                    </div>
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => handleSort("status")}
+                    >
+                      Status
+                      {renderSortIcon("status")}
+                    </button>
                   </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide cursor-pointer"
-                    onClick={() => handleSort("costPrice")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Cost Price
-                      {renderSortIcon("costPrice")}
-                    </div>
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => handleSort("lastUpdated")}
+                    >
+                      Last Updated
+                      {renderSortIcon("lastUpdated")}
+                    </button>
                   </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
-                  >
-                    Value
-                  </th>
-                  <th 
-                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground tracking-wide"
-                  >
-                    Status
+                  <th className="h-12 px-4 text-left align-middle font-medium">
+                    Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredInventory.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="text-center py-8 text-muted-foreground">
-                      <div className="flex flex-col items-center justify-center">
-                        <Box size={40} className="mb-2 text-muted-foreground" />
-                        <p>No inventory items found</p>
+                {filteredStockItems.map((item) => (
+                  <tr key={item.id} className="border-b">
+                    <td className="p-4">
+                      <div>
+                        <div className="font-medium">{item.product.name}</div>
+                        <div className="text-sm text-muted-foreground">{item.product.code}</div>
                       </div>
                     </td>
+                    <td className="p-4">{item.quantity}</td>
+                    <td className="p-4">{item.location}</td>
+                    <td className="p-4">{item.batchNumber}</td>
+                    <td className="p-4">
+                      {item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                        ${item.status === 'In Stock' ? 'bg-green-100 text-green-800' :
+                          item.status === 'Low Stock' ? 'bg-yellow-100 text-yellow-800' :
+                          item.status === 'Out of Stock' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      {new Date(item.lastUpdated).toLocaleString()}
+                    </td>
+                    <td className="p-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push(`/inventory/stock/${item.id}/edit`)}
+                      >
+                        Edit
+                      </Button>
+                    </td>
                   </tr>
-                ) : (
-                  filteredInventory.map((item) => {
-                    const isExpanded = expandedProducts.has(item.productId);
-                    const locationRows = isExpanded ? item.locations : [];
-                    const isLowStock = item.totalStock > 0 && item.totalStock <= item.reorderPoint;
-                    const isOutOfStock = item.totalStock === 0;
-                    
-                    return (
-                      <React.Fragment key={item.productId}>
-                        <tr className={`border-b ${isExpanded ? "bg-muted/30" : "hover:bg-muted/50"}`}>
-                          <td className="p-3 text-center">
-                            <button
-                              onClick={() => toggleRowExpansion(item.productId)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
-                            >
-                              <span className="sr-only">Toggle locations</span>
-                              {isExpanded ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M5 12h14"></path>
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M5 12h14"></path>
-                                  <path d="M12 5v14"></path>
-                                </svg>
-                              )}
-                            </button>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="font-medium">
-                              {isLowStock || isOutOfStock ? (
-                                <div className="flex items-center gap-1">
-                                  {item.productName}
-                                  <AlertCircle
-                                    size={16}
-                                    className={isOutOfStock ? "text-destructive" : "text-amber-500"}
-                                  />
-                                </div>
-                              ) : (
-                                item.productName
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            {item.productCode}
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            {item.category}
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            <div className={
-                              isOutOfStock
-                                ? "text-destructive font-medium"
-                                : isLowStock
-                                ? "text-amber-500 font-medium"
-                                : ""
-                            }>
-                              {item.totalStock.toLocaleString()}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            {item.reorderPoint.toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            {item.unit === "PIECE" ? "Piece" : item.unit}
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            ₹ {item.costPrice.toLocaleString('en-IN', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </td>
-                          <td className="py-3 px-4 text-sm">
-                            ₹ {(item.totalStock * item.costPrice).toLocaleString('en-IN', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                              ${!isLowStock && !isOutOfStock ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : ""}
-                              ${isLowStock ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" : ""}
-                              ${isOutOfStock ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" : ""}
-                            `}>
-                              {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
-                            </div>
-                          </td>
-                        </tr>
-                        {isExpanded && locationRows.map((location) => (
-                          <tr 
-                            key={`${item.productId}-${location.locationId}`}
-                            className="border-b bg-muted/10"
-                          >
-                            <td className="p-3"></td>
-                            <td colSpan={3} className="py-2 px-4">
-                              <div className="text-sm text-muted-foreground pl-4 border-l-2 border-border">
-                                {location.locationName}
-                              </div>
-                            </td>
-                            <td className="py-2 px-4 text-sm">
-                              {location.quantity.toLocaleString()}
-                            </td>
-                            <td colSpan={5}></td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    );
-                  })
-                )}
+                ))}
               </tbody>
             </table>
           </div>
           
-          {/* Simple Pagination */}
+          {/* Pagination */}
           <div className="flex items-center justify-between px-4 py-3 border-t">
             <div className="text-sm text-muted-foreground">
-              Showing {filteredInventory.length} of {inventory.length} items
+              Showing {filteredStockItems.length} of {stockItems.length} stock items
             </div>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" disabled>
@@ -594,6 +488,16 @@ export default function InventoryStockPage() {
           </div>
         </div>
       </main>
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImport}
+        title="Import Stock Items"
+        description="Upload an Excel file with stock data. The file should have columns for product code, quantity, location, etc."
+        templateColumns={importTemplateColumns}
+      />
     </div>
   );
 }

@@ -89,6 +89,7 @@ export default function CategoriesPage() {
     if (!categories.some(c => c.parentId === category.id)) {
       return sum + category.productCount;
     }
+    console.log('sum',sum)
     return sum;
   }, 0);
 
@@ -237,7 +238,7 @@ export default function CategoriesPage() {
         </div>
         <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
           <p className="text-sm font-medium text-muted-foreground">Total Products</p>
-          <p className="text-2xl font-bold">{totalProducts}</p>
+          <p className="text-2xl font-bold">{totalProducts ?? 0}</p>
         </div>
       </div>
 

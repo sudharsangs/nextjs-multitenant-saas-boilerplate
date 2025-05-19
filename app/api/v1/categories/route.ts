@@ -7,7 +7,6 @@ import { getToken } from '@/lib/server-cookies';
 import { getAuthUser } from '@/lib/auth';
 
 const categorySchema = z.object({
-  companyId: z.string(),
   name: z.string().min(2),
   description: z.string().optional(),
   parentId: z.string().optional().nullable(),
@@ -47,7 +46,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const token = await getToken();;
     if (!token) {
@@ -58,7 +57,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const categoryData = categorySchema.parse(body);
+    const companyId = getAuthUser(request)?.companyId;
+    const categoryData = {
+      ...categorySchema.parse(body),
+      companyId
+    };
 
     const [category] = await db
       .insert(categories)
