@@ -1,158 +1,95 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  ArrowLeft, 
-  AlertCircle, 
-  Printer, 
-  FileDown,
-  CheckCircle2,
-  XCircle,
-  Truck,
-  Package,
-  ShoppingCart
-} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api-client";
 
-interface OrderItem {
+interface SalesOrderItem {
   id: string;
   productId: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
   product: {
     id: string;
     name: string;
     code: string;
   };
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
 }
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-}
-
-interface Order {
+interface SalesOrder {
   id: string;
   orderNumber: string;
-  customer: Customer;
-  status: 'DRAFT' | 'CONFIRMED' | 'PICKING' | 'PACKED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  customerId: string;
+  customer: {
+    id: string;
+    name: string;
+    code: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+  status: "draft" | "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
   totalAmount: number;
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
+  orderDate: string;
+  expectedDeliveryDate: string | null;
+  notes: string;
+  items: SalesOrderItem[];
+  companyId: string;
+  lastUpdated: string;
 }
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
+export default function ViewSalesOrderPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const router = useRouter();
-  const { id } = params;
-  
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [salesOrder, setSalesOrder] = useState<SalesOrder | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updateLoading, setUpdateLoading] = useState(false);
 
   useEffect(() => {
-    const fetchOrder = async () => {
+    const fetchSalesOrder = async () => {
       try {
-        const response = await api.get<Order>(`/sales/orders/${id}`);
+        const response = await api.get<SalesOrder>(`/sales-orders/${params.id}`);
         if (response.success && response.data) {
-          setOrder(response.data);
+          setSalesOrder(response.data);
         } else {
-          throw new Error(response.error || 'Failed to fetch order details');
+          setError(response.error || "Failed to load sales order");
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load order details');
-        console.error(err);
+        console.error("Error loading sales order:", err);
+        setError("Failed to load sales order");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchOrder();
-  }, [id]);
+    fetchSalesOrder();
+  }, [params.id]);
 
-  const handleStatusUpdate = async (newStatus: Order['status']) => {
-    if (!order) return;
-    
-    setUpdateLoading(true);
-    try {
-      const response = await api.put<Order>(`/sales/orders/${id}`, {
-        status: newStatus
-      });
-      
-      if (response.success && response.data) {
-        setOrder(response.data);
-      } else {
-        throw new Error(response.error || 'Failed to update order status');
-      }
-    } catch (err) {
-      console.error('Error updating order status:', err);
-      // You might want to show an error toast here
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'DELIVERED':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      case 'CANCELLED':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      case 'SHIPPED':
-        return <Truck className="h-5 w-5 text-blue-500" />;
-      case 'PACKED':
-        return <Package className="h-5 w-5 text-amber-500" />;
-      default:
-        return <ShoppingCart className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "DELIVERED":
-        return "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400";
-      case "CANCELLED":
-        return "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400";
-      case "DRAFT":
-        return "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400";
-      case "CONFIRMED":
-        return "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400";
-      case "PICKING":
-      case "PACKED":
-      case "SHIPPED":
-        return "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400";
-      default:
-        return "bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400";
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-primary"></div>
       </div>
     );
   }
 
-  if (error || !order) {
+  if (error || !salesOrder) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <AlertCircle className="h-10 w-10 text-destructive mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Order Not Found</h2>
-        <p className="text-muted-foreground mb-4">The order you're looking for doesn't exist or has been deleted.</p>
-        <Button onClick={() => router.push("/sales/orders")}>
-          Return to Orders
+      <div className="p-4">
+        <div className="text-red-500">{error || "Sales order not found"}</div>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => router.push("/sales/orders")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Sales Orders
         </Button>
       </div>
     );
@@ -162,169 +99,150 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="outline"
             onClick={() => router.push("/sales/orders")}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Order {order.orderNumber}</h1>
-            <p className="text-sm text-muted-foreground">
-              Created on {new Date(order.createdAt).toLocaleDateString()}
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold">
+            Sales Order #{salesOrder.orderNumber}
+          </h1>
         </div>
-        <div className="flex items-center gap-2">
-          {order.status === 'DRAFT' && (
-            <Button 
-              onClick={() => router.push(`/sales/orders/${id}/edit`)}
-              className="flex items-center gap-1"
-            >
-              <Edit className="h-4 w-4" />
-              Edit Order
-            </Button>
-          )}
-          <Button variant="outline" className="flex items-center gap-1">
-            <FileDown className="h-4 w-4" />
-            Export
-          </Button>
-          <Button variant="outline" className="flex items-center gap-1">
-            <Printer className="h-4 w-4" />
-            Print
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/sales/orders/${params.id}/edit`)}
+        >
+          <Pencil className="h-4 w-4 mr-2" />
+          Edit
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Order Status Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 mb-4">
-              {getStatusIcon(order.status)}
-              <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(order.status)}`}>
-                {order.status}
-              </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-card rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium mb-4">Customer Information</h2>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-500">Customer Name</p>
+              <p className="font-medium">{salesOrder.customer.name}</p>
             </div>
-            {order.status === 'DRAFT' && (
-              <Button
-                className="w-full"
-                disabled={updateLoading}
-                onClick={() => handleStatusUpdate('CONFIRMED')}
-              >
-                Confirm Order
-              </Button>
-            )}
-            {order.status === 'CONFIRMED' && (
-              <Button
-                className="w-full"
-                disabled={updateLoading}
-                onClick={() => handleStatusUpdate('PICKING')}
-              >
-                Start Picking
-              </Button>
-            )}
-            {/* Add more status transition buttons as needed */}
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-sm text-gray-500">Customer Code</p>
+              <p className="font-medium">{salesOrder.customer.code}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium">{salesOrder.customer.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-medium">{salesOrder.customer.phone}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Address</p>
+              <p className="font-medium">{salesOrder.customer.address}</p>
+            </div>
+          </div>
+        </div>
 
-        {/* Customer Details Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="space-y-2">
-              <div>
-                <dt className="text-sm text-muted-foreground">Name</dt>
-                <dd className="font-medium">{order.customer.name}</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Email</dt>
-                <dd>{order.customer.email}</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Phone</dt>
-                <dd>{order.customer.phone}</dd>
-              </div>
-              <div>
-                <dt className="text-sm text-muted-foreground">Address</dt>
-                <dd className="text-sm">
-                  {order.customer.address}<br />
-                  {order.customer.city}, {order.customer.state} {order.customer.pincode}
-                </dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-
-        {/* Order Summary Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Order Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="space-y-2">
-              <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Total Items</dt>
-                <dd className="font-medium">{order.items.length}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Total Amount</dt>
-                <dd className="font-medium">₹{order.totalAmount.toLocaleString('en-IN', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                })}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
+        <div className="bg-card rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium mb-4">Order Information</h2>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-gray-500">Status</p>
+              <p className="font-medium">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    salesOrder.status === "confirmed"
+                      ? "bg-green-100 text-green-800"
+                      : salesOrder.status === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : salesOrder.status === "shipped"
+                      ? "bg-blue-100 text-blue-800"
+                      : salesOrder.status === "delivered"
+                      ? "bg-purple-100 text-purple-800"
+                      : salesOrder.status === "cancelled"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {salesOrder.status.charAt(0).toUpperCase() +
+                    salesOrder.status.slice(1)}
+                </span>
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Order Date</p>
+              <p className="font-medium">
+                {new Date(salesOrder.orderDate).toLocaleDateString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Expected Delivery</p>
+              <p className="font-medium">
+                {salesOrder.expectedDeliveryDate
+                  ? new Date(
+                      salesOrder.expectedDeliveryDate
+                    ).toLocaleDateString()
+                  : "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Total Amount</p>
+              <p className="font-medium">
+                ${salesOrder.totalAmount.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Notes</p>
+              <p className="font-medium whitespace-pre-wrap">
+                {salesOrder.notes || "-"}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Order Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Order Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">Product</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">SKU</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Quantity</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Unit Price</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Total</th>
+      <div className="bg-card rounded-lg shadow p-6">
+        <h2 className="text-lg font-medium mb-4">Order Items</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                  Quantity
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                  Unit Price
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
+                  Total Price
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {salesOrder.items.map((item) => (
+                <tr key={item.id} className="border-b">
+                  <td className="px-6 py-4 text-sm">
+                    {item.product.name} ({item.product.code})
+                  </td>
+                  <td className="px-6 py-4 text-sm">{item.quantity}</td>
+                  <td className="px-6 py-4 text-sm">
+                    ${item.unitPrice.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    ${item.totalPrice.toFixed(2)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {order.items.map((item) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="py-3 px-4">
-                      <div className="font-medium">{item.product.name}</div>
-                    </td>
-                    <td className="py-3 px-4 text-sm">{item.product.code}</td>
-                    <td className="py-3 px-4 text-right">{item.quantity}</td>
-                    <td className="py-3 px-4 text-right">₹{item.unitPrice.toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}</td>
-                    <td className="py-3 px-4 text-right">₹{item.totalPrice.toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

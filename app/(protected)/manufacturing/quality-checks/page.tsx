@@ -1,25 +1,191 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { api } from "@/lib/api-client";
+
+interface QualityCheck {
+  id: string;
+  productionOrderId: string;
+  inspectorId: string;
+  status: "PENDING" | "PASSED" | "FAILED";
+  type: "INSPECTION" | "TESTING" | "CERTIFICATION";
+  result: string | null;
+  notes: string | null;
+  companyId: string;
+}
 
 export default function QualityChecksPage() {
+  const router = useRouter();
+  const [checks, setChecks] = useState<QualityCheck[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  useEffect(() => {
+    const fetchChecks = async () => {
+      setIsLoading(true);
+      try {
+        const response = await api.get<QualityCheck[]>("/quality-checks");
+        if (response.success && response.data) {
+          setChecks(response.data);
+        } else {
+          setError(response.error || "Failed to load quality checks");
+        }
+      } catch (err) {
+        console.error("Error loading quality checks:", err);
+        setError("Failed to load quality checks");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChecks();
+  }, []);
+
+  const filteredChecks = checks.filter((check) => {
+    const matchesSearch = 
+      check.result?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      check.notes?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || check.status === statusFilter;
+    const matchesType = typeFilter === "all" || check.type === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-4 border-b-4 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Quality Checks</h1>
+        </div>
+        <div className="p-4 border border-red-300 bg-red-50 rounded-md text-red-700">
+          <p>{error}</p>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+            className="mt-4"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Quality Checks</h1>
-        <button
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
-        >
-          New Quality Check
-        </button>
+        <Button onClick={() => router.push("/manufacturing/quality-checks/new")}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Check
+        </Button>
       </div>
-      
-      <div className="bg-card rounded-lg shadow p-6">
-        <div className="text-card-foreground">
-          <p className="mb-4">Manage product quality checks here.</p>
-          <div className="border rounded-md p-8 text-center">
-            <h3 className="text-lg font-medium mb-2">No quality checks found</h3>
-            <p className="text-muted-foreground mb-4">Get started by creating your first quality check.</p>
-          </div>
+
+      <div className="flex gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search by result or notes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="PASSED">Passed</SelectItem>
+            <SelectItem value="FAILED">Failed</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="INSPECTION">Inspection</SelectItem>
+            <SelectItem value="TESTING">Testing</SelectItem>
+            <SelectItem value="CERTIFICATION">Certification</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredChecks.map((check) => (
+          <div
+            key={check.id}
+            className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => router.push(`/manufacturing/quality-checks/${check.id}`)}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Check #{check.id}</h3>
+                <p className="text-sm text-gray-500">{check.type}</p>
+              </div>
+              <span
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  check.status === "PASSED"
+                    ? "bg-green-100 text-green-800"
+                    : check.status === "FAILED"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                {check.status}
+              </span>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <p className="text-sm text-gray-500">Production Order</p>
+                <p className="font-medium">#{check.productionOrderId}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Inspector</p>
+                <p className="font-medium">#{check.inspectorId}</p>
+              </div>
+              {check.result && (
+                <div>
+                  <p className="text-sm text-gray-500">Result</p>
+                  <p className="text-sm">{check.result}</p>
+                </div>
+              )}
+              {check.notes && (
+                <div>
+                  <p className="text-sm text-gray-500">Notes</p>
+                  <p className="text-sm">{check.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
