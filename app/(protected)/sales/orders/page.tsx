@@ -35,7 +35,7 @@ export default function SalesOrdersPage() {
   useEffect(() => {
     const fetchSalesOrders = async () => {
       try {
-        const response = await api.get<SalesOrder[]>("/sales-orders");
+        const response = await api.get<SalesOrder[]>("/orders");
         if (response.success && response.data) {
           setSalesOrders(response.data);
         } else {

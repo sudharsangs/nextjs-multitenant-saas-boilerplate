@@ -107,7 +107,7 @@ export default function NewSalesOrderPage() {
     setError(null);
 
     try {
-      const response = await api.post<ApiResponse>("/sales-orders", formData);
+      const response = await api.post<ApiResponse>("/orders", formData);
 
       if (response.success && response.data) {
         router.push(`/sales/orders/${response.data.id}`);

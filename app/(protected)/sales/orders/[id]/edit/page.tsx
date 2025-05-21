@@ -85,7 +85,7 @@ export default function EditSalesOrderPage({
       try {
         const [orderResponse, customersResponse, productsResponse] =
           await Promise.all([
-            api.get<SalesOrder>(`/sales-orders/${params.id}`),
+            api.get<SalesOrder>(`/orders/${params.id}`),
             api.get<Customer[]>("/customers"),
             api.get<Product[]>("/products"),
           ]);
@@ -130,7 +130,7 @@ export default function EditSalesOrderPage({
     setError(null);
 
     try {
-      const response = await api.put(`/sales-orders/${params.id}`, formData);
+      const response = await api.put(`/orders/${params.id}`, formData);
 
       if (response.success) {
         router.push(`/sales/orders/${params.id}`);

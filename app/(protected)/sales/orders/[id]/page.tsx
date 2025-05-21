@@ -54,7 +54,7 @@ export default function ViewSalesOrderPage({
   useEffect(() => {
     const fetchSalesOrder = async () => {
       try {
-        const response = await api.get<SalesOrder>(`/sales-orders/${params.id}`);
+        const response = await api.get<SalesOrder>(`/orders/${params.id}`);
         if (response.success && response.data) {
           setSalesOrder(response.data);
         } else {
