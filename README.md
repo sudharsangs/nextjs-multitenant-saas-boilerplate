@@ -2,6 +2,10 @@
 
 A production-ready, full-stack multi-tenant SaaS boilerplate built with Next.js 15, TypeScript, PostgreSQL, and Drizzle ORM. Perfect for building B2B SaaS applications with complete tenant isolation, subscription management, and role-based access control.
 
+## Preview
+
+![App Screenshot](public/screenshot.png)
+
 ## About This Project
 
 This boilerplate is developed and maintained by [FactoStack](https://factostack.com), a product development studio that specializes in rapid digital product launches. FactoStack helps founders and product teams transform ideas into working applications in 4-8 weeks, with a focus on AI-first development and modern best practices.
@@ -83,6 +87,11 @@ POSTGRES_DB=factostack
 JWT_SECRET=your-super-secure-jwt-secret-key-here
 JWT_EXPIRY=24h
 REFRESH_TOKEN_EXPIRY=7d
+
+# API Keys
+# Dedicated secret to hash API key secrets (pepper for HMAC).
+# Recommended to be different from JWT_SECRET.
+API_KEY_SECRET=your-api-key-secret-pepper
 
 # App URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -245,7 +254,7 @@ The boilerplate includes the following core tables:
 ### Subscriptions
 - `GET /api/v1/subscriptions` - Get company subscription
 - `POST /api/v1/subscriptions` - Create subscription
-- `PUT /api/v1/subscriptions/:id` - Update subscription
+- `PUT /api/v1/subscriptions` - Update subscription
 
 ### Dashboard
 - `GET /api/v1/dashboard/overview` - Dashboard statistics
@@ -256,6 +265,12 @@ The boilerplate includes the following core tables:
 - `GET /api/v1/audit-logs/:id` - Get log details
 - `GET /api/v1/audit-logs/entity/:entityType/:entityId` - Entity-specific logs
 - `GET /api/v1/audit-logs/user/:userId` - User activity logs
+
+### API Keys
+- `GET /api/v1/api-keys` - List API keys
+- `POST /api/v1/api-keys` - Create an API key (returns token once)
+- `PATCH /api/v1/api-keys/:id` - Update name/permissions/expiresAt
+- `DELETE /api/v1/api-keys/:id` - Revoke API key (soft disable)
 
 ### Reports
 - `GET /api/v1/reports/dashboard` - Dashboard report

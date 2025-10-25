@@ -25,8 +25,8 @@ export function composeToken(keyId: string, secret: string) {
 }
 
 export function hashSecret(secret: string) {
-  // HMAC-SHA256 with app secret as pepper (falls back to plain SHA256 if missing)
-  const pepper = process.env.JWT_SECRET || '';
+  // HMAC-SHA256 with dedicated API_KEY_SECRET (fallback to JWT_SECRET)
+  const pepper = process.env.API_KEY_SECRET || process.env.JWT_SECRET || '';
   const hmac = crypto.createHmac('sha256', pepper);
   hmac.update(secret);
   return hmac.digest('hex');
@@ -42,4 +42,3 @@ export function maskKeyId(keyId: string) {
   const visible = keyId.slice(-4);
   return `${keyId.slice(0, 3)}…${visible}`; // fk_…abcd
 }
-
