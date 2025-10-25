@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { products, inventory, orders } from '@/db/schema';
-import { sql } from 'drizzle-orm';
+import { users, subscriptions } from '@/db/schema';
+import { sql, eq } from 'drizzle-orm';
 import { getAuthUser } from '@/lib/auth';
 import type { NextRequest } from 'next/server';
 
@@ -12,57 +12,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get total products count
-    const totalProducts = await db
+    // Get total users count for the company
+    const totalUsers = await db
       .select({ count: sql<number>`count(*)` })
-      .from(products)
-      .where(sql`${products.companyId} = ${companyId}`)
-      .then(res => res[0].count);
+      .from(users)
+      .where(sql`${users.companyId} = ${companyId} AND ${users.isActive} = true`)
+      .then(res => Number(res[0]?.count) || 0);
 
-    // Get low stock items count (items below reorder point)
-    const lowStockItems = await db
+    // Get subscription status
+    const subscription = await db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.companyId, companyId))
+      .limit(1)
+      .then(res => res[0]);
+
+    // Get active users count (users who logged in within last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const activeUsers = await db
       .select({ count: sql<number>`count(*)` })
-      .from(inventory)
+      .from(users)
       .where(sql`
-        ${inventory.companyId} = ${companyId}
-        AND ${inventory.quantity} <= ${products.reorderPoint}
+        ${users.companyId} = ${companyId}
+        AND ${users.isActive} = true
+        AND ${users.lastLoginAt} >= ${thirtyDaysAgo}
       `)
-      .then(res => res[0].count);
-
-    // Get pending orders count
-    const pendingOrders = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(orders)
-      .where(sql`
-        ${orders.companyId} = ${companyId}
-        AND ${orders.status} IN ('CONFIRMED', 'PICKING', 'PACKED')
-      `)
-      .then(res => res[0].count);
-
-    // Get this month's revenue
-    const currentDate = new Date();
-    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-    const monthlyRevenue = await db
-      .select({ total: sql<number>`sum(${orders.totalAmount})` })
-      .from(orders)
-      .where(sql`
-        ${orders.companyId} = ${companyId}
-        AND ${orders.status} = 'DELIVERED'
-        AND ${orders.createdAt} >= ${firstDayOfMonth}
-        AND ${orders.createdAt} <= ${lastDayOfMonth}
-      `)
-      .then(res => res[0].total || 0);
+      .then(res => Number(res[0]?.count) || 0);
 
     return NextResponse.json({
-      totalProducts,
-      lowStockItems,
-      pendingOrders,
-      monthlyRevenue
+      totalUsers,
+      activeUsers,
+      subscriptionPlan: subscription?.plan || 'FREE',
+      subscriptionStatus: subscription?.isActive ? 'active' : 'inactive'
     });
   } catch (error) {
-    console.error('Error fetching dashboard overview:', error);
     return NextResponse.json(
       { error: 'Failed to fetch dashboard overview' },
       { status: 500 }

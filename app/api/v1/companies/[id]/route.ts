@@ -4,12 +4,9 @@ import { db } from '@/db';
 import {
   companies,
   users,
-  locations,
-  products,
-  inventory,
   subscriptions
 } from '@/db/schema';
-import { eq, and, count, sql } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 import { getToken } from '@/lib/server-cookies';
 import { getAuthUser } from '@/lib/auth';
 
@@ -92,7 +89,6 @@ export async function GET(
 
     return NextResponse.json(company);
   } catch (err) {
-    console.error('Error in GET company by id:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -149,7 +145,6 @@ export async function PUT(
         { status: 400 }
       );
     }
-    console.error('Error in PUT company by id:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -197,7 +192,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Company deleted successfully' });
   } catch (err) {
-    console.error('Error in DELETE company by id:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -257,7 +251,6 @@ export async function GET_USERS(
 
     return NextResponse.json(companyUsers);
   } catch (err) {
-    console.error('Error in GET_USERS for company:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -311,7 +304,6 @@ export async function GET_SUBSCRIPTION(
 
     return NextResponse.json(subscription);
   } catch (err) {
-    console.error('Error in GET_SUBSCRIPTION for company:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -358,106 +350,22 @@ export async function GET_STATS(
         eq(users.isActive, true)
       ));
 
-    // Get location count
-    const [locationCount] = await db
+    // Get subscription count
+    const [subscriptionCount] = await db
       .select({ count: count() })
-      .from(locations)
+      .from(subscriptions)
       .where(and(
-        eq(locations.companyId, companyId),
-        eq(locations.isActive, true)
+        eq(subscriptions.companyId, companyId),
+        eq(subscriptions.isActive, true)
       ));
-
-    // Get product count
-    const [productCount] = await db
-      .select({ count: count() })
-      .from(products)
-      .where(and(
-        eq(products.companyId, companyId),
-        eq(products.isActive, true)
-      ));
-
-    // Get inventory count (total items)
-    const [inventoryCount] = await db
-      .select({ count: count() })
-      .from(inventory)
-      .where(and(
-        eq(inventory.companyId, companyId),
-        eq(inventory.isActive, true)
-      ));
-
-    // Fix for the SUM calculation in the inventory query
-    const inventorySumResult = await db
-      .select({
-        totalQuantity: sql`sum(${inventory.quantity})`
-      })
-      .from(inventory)
-      .where(and(
-        eq(inventory.companyId, companyId),
-        eq(inventory.isActive, true)
-      ));
-
-    const totalInventoryQuantity = inventorySumResult[0]?.totalQuantity ?? 0;
 
     const stats = {
       userCount: userCount.count,
-      locationCount: locationCount.count,
-      productCount: productCount.count,
-      inventoryItemCount: inventoryCount.count,
-      totalInventoryQuantity,
+      subscriptionCount: subscriptionCount.count
     };
 
     return NextResponse.json(stats);
   } catch (err) {
-    console.error('Error in GET_STATS for company:', err);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-// Get company locations
-export async function GET_LOCATIONS(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const token = await getToken();;
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const companyId = params.id;
-
-    // Check if company exists
-    const [existingCompany] = await db
-      .select()
-      .from(companies)
-      .where(eq(companies.id, companyId))
-      .limit(1);
-
-    if (!existingCompany) {
-      return NextResponse.json(
-        { error: 'Company not found' },
-        { status: 404 }
-      );
-    }
-
-    // Get all locations for the company
-    const companyLocations = await db
-      .select()
-      .from(locations)
-      .where(and(
-        eq(locations.companyId, companyId),
-        eq(locations.isActive, true)
-      ));
-
-    return NextResponse.json(companyLocations);
-  } catch (err) {
-    console.error('Error in GET_LOCATIONS for company:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

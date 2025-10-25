@@ -44,7 +44,6 @@ export async function middleware(request: NextRequest) {
     try {
       // Verify JWT token
       const decodedToken = await verifyJwt(token);
-      console.log('Decoded token:', decodedToken);
       // Add the user info to request headers for use in API routes
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set('x-user-id', decodedToken.userId);
@@ -59,13 +58,12 @@ export async function middleware(request: NextRequest) {
 
       return response;
     } catch(err) {
-      console.log("err",err)
       // Return 401 Unauthorized for invalid tokens
       return NextResponse.json(
-        { 
+        {
           success: false,
           message: 'Authentication failed',
-          error: 'Invalid or expired token' 
+          error: 'Invalid or expired token'
         },
         { status: 401 }
       );

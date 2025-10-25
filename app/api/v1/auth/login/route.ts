@@ -12,7 +12,7 @@ interface LoginRequestBody {
   password: string;
 }
 
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const body: LoginRequestBody = await request.json();
     const { email, password } = body;
