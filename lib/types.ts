@@ -1,65 +1,9 @@
-export enum LocationTypeEnum {
-    WAREHOUSE = 'WAREHOUSE',
-    FACTORY = 'FACTORY',
-    STORE = 'STORE',
-}
-
+// Subscription Tier Enums
 export enum SubscriptionTierEnum {
     FREE = "FREE",
     BASIC = "BASIC",
     STANDARD = "PRO",
     PREMIUM = "ENTERPRISE"
-}
-
-export enum InventoryStatusEnum {
-    AVAILABLE = 'AVAILABLE',
-    RESERVED = 'RESERVED',
-    DAMAGED = 'DAMAGED',
-    QUARANTINED = 'QUARANTINED',
-}
-
-export enum BatchStatusEnum {
-    ACTIVE = 'ACTIVE',
-    EXPIRED = 'EXPIRED',
-    RECALLED = 'RECALLED',
-}
-
-export enum PoStatusEnum {
-    DRAFT = 'DRAFT',
-    PENDING_APPROVAL = 'PENDING_APPROVAL',
-    APPROVED = 'APPROVED',
-    SENT = 'SENT',
-    PARTIALLY_RECEIVED = 'PARTIALLY_RECEIVED',
-    FULLY_RECEIVED = 'FULLY_RECEIVED',
-    CLOSED = 'CLOSED',
-    CANCELLED = 'CANCELLED',
-}
-
-export enum OrderStatusEnum {
-    DRAFT = 'DRAFT',
-    CONFIRMED = 'CONFIRMED',
-    PICKING = 'PICKING',
-    PACKED = 'PACKED',
-    SHIPPED = 'SHIPPED',
-    DELIVERED = 'DELIVERED',
-    CANCELLED = 'CANCELLED',
-}
-
-export enum TaxTypeEnum {
-    GST = 'GST',
-    IGST = 'IGST',
-    CGST = 'CGST',
-    SGST = 'SGST',
-    CESS = 'CESS',
-}
-
-export enum UnitTypeEnum {
-    PIECE = 'PIECE',
-    KG = 'KG',
-    LITER = 'LITER',
-    METER = 'METER',
-    SQUARE_METER = 'SQUARE_METER',
-    CUBIC_METER = 'CUBIC_METER',
 }
 
 export enum SubscriptionPlanEnum {
@@ -77,23 +21,7 @@ export enum SubscriptionStatusEnum {
     PAYMENT_PENDING = 'PAYMENT_PENDING',
 }
 
-export enum InvoiceStatusEnum {
-    DRAFT = 'DRAFT',
-    SENT = 'SENT',
-    PAID = 'PAID',
-    OVERDUE = 'OVERDUE',
-    CANCELLED = 'CANCELLED',
-    PARTIALLY_PAID = 'PARTIALLY_PAID',
-}
-
-export enum QuoteStatusEnum {
-    DRAFT = 'DRAFT',
-    SENT = 'SENT',
-    ACCEPTED = 'ACCEPTED',
-    REJECTED = 'REJECTED',
-    EXPIRED = 'EXPIRED',
-}
-
+// Payment Enums
 export enum PaymentStatusEnum {
     PENDING = 'PENDING',
     PROCESSING = 'PROCESSING',
@@ -102,6 +30,7 @@ export enum PaymentStatusEnum {
     REFUNDED = 'REFUNDED',
 }
 
+// User Management Enums
 export enum UserRoleEnum {
     ADMIN = 'ADMIN',
     MANAGER = 'MANAGER',
@@ -109,6 +38,7 @@ export enum UserRoleEnum {
     VIEWER = 'VIEWER',
 }
 
+// Notification Enums
 export enum NotificationTypeEnum {
     SYSTEM = 'SYSTEM',
     ALERT = 'ALERT',
@@ -123,6 +53,7 @@ export enum NotificationStatusEnum {
     ARCHIVED = 'ARCHIVED',
 }
 
+// Audit Log Enums
 export enum AuditActionEnum {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
@@ -133,6 +64,7 @@ export enum AuditActionEnum {
     IMPORT = 'IMPORT',
 }
 
+// Integration Enums
 export enum IntegrationTypeEnum {
     PAYMENT_GATEWAY = 'PAYMENT_GATEWAY',
     EMAIL = 'EMAIL',
@@ -148,4 +80,3 @@ export enum IntegrationStatusEnum {
     ERROR = 'ERROR',
     PENDING = 'PENDING',
 }
-

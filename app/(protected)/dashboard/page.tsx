@@ -1,66 +1,36 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { 
-  BoxIcon, 
-  TruckIcon, 
-  ShoppingCartIcon, 
+import {
   UsersIcon,
+  BellIcon,
+  KeyIcon,
+  ShieldIcon,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
-import { DashboardCard } from "@/components/dashboard/dashboard-card";
-import { EmptyState } from "@/components/shared/empty-state";
-import { RecentActivitiesTable } from "@/components/dashboard/recent-activities-table";
-import { LowStockAlerts } from "@/components/dashboard/low-stock-alerts";
-import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DashboardData {
-  totalProducts: number;
-  productChange: number;
-  pendingOrders: number;
-  orderChange: number;
-  purchaseOrders: number;
-  purchaseChange: number;
-  activeVendors: number;
-  vendorChange: number;
-  lowStockAlerts: Array<{
-    id: number;
-    product: string;
-    currentStock: number;
-    reorderPoint: number;
-    location: string;
-  }>;
-  recentActivities: Array<{
-    id: string;
-    type: "sale" | "purchase" | "inventory" | "production";
-    description: string;
-    user: string;
-    timestamp: string;
-    status: "success" | "warning" | "error";
-    link?: string;
-  }>;
+  totalUsers: number;
+  activeUsers: number;
+  notifications: number;
+  apiKeys: number;
+  company: {
+    name: string;
+    plan: string;
+    users: number;
+  };
 }
 
 export default function ProtectedDashboard() {
   const [isLoading, setIsLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<DashboardData>({
-    totalProducts: 0,
-    productChange: 0,
-    pendingOrders: 0,
-    orderChange: 0,
-    purchaseOrders: 0,
-    purchaseChange: 0,
-    activeVendors: 0,
-    vendorChange: 0,
-    lowStockAlerts: [],
-    recentActivities: []
-  });
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await api.get<{ data: DashboardData }>('/reports/dashboard');
+        const response = await api.get<{ data: DashboardData }>('/dashboard/overview');
         if (response.success && response.data) {
           setDashboardData(response.data.data);
         } else {
@@ -77,81 +47,149 @@ export default function ProtectedDashboard() {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
   }
 
   if (error) {
-    return <EmptyState 
-      title="Error Loading Dashboard"
-      description={error}
-    />;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Card className="w-96">
+          <CardHeader>
+            <CardTitle>Error</CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
   }
 
   const summaryCards = [
-    { 
-      title: "Total Inventory", 
-      value: dashboardData?.totalProducts ?? 0, 
-      change: dashboardData?.productChange ?? 0, 
-      icon: <BoxIcon size={24} className="text-blue-500" />, 
-      color: "bg-blue-100", 
-      link: "/inventory/stock" 
+    {
+      title: "Total Users",
+      value: dashboardData?.totalUsers ?? 0,
+      description: `${dashboardData?.activeUsers ?? 0} active users`,
+      icon: <UsersIcon className="h-4 w-4 text-muted-foreground" />,
     },
-    { 
-      title: "Pending Orders", 
-      value: dashboardData?.pendingOrders ?? 0, 
-      change: dashboardData?.orderChange ?? 0, 
-      icon: <ShoppingCartIcon size={24} className="text-purple-500" />, 
-      color: "bg-purple-100", 
-      link: "/sales/orders" 
+    {
+      title: "Notifications",
+      value: dashboardData?.notifications ?? 0,
+      description: "Unread notifications",
+      icon: <BellIcon className="h-4 w-4 text-muted-foreground" />,
     },
-    { 
-      title: "Purchase Orders", 
-      value: dashboardData?.purchaseOrders ?? 0, 
-      change: dashboardData?.purchaseChange ?? 0, 
-      icon: <TruckIcon size={24} className="text-amber-500" />, 
-      color: "bg-amber-100", 
-      link: "/purchases/orders" 
+    {
+      title: "API Keys",
+      value: dashboardData?.apiKeys ?? 0,
+      description: "Active API keys",
+      icon: <KeyIcon className="h-4 w-4 text-muted-foreground" />,
     },
-    { 
-      title: "Active Vendors", 
-      value: dashboardData?.activeVendors ?? 0, 
-      change: dashboardData?.vendorChange ?? 0, 
-      icon: <UsersIcon size={24} className="text-green-500" />, 
-      color: "bg-green-100", 
-      link: "/purchases/vendors" 
+    {
+      title: "Security",
+      value: "Active",
+      description: "All systems operational",
+      icon: <ShieldIcon className="h-4 w-4 text-muted-foreground" />,
     },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <div className="flex items-center gap-2">
-          <Link 
-            href="/inventory/stock" 
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-10 py-2 px-4 hover:bg-primary/90"
-          >
-            Add Inventory
-          </Link>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Welcome back! Here's your company overview.
+          </p>
         </div>
       </div>
-      
+
+      {/* Company Info */}
+      {dashboardData?.company && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{dashboardData.company.name}</CardTitle>
+            <CardDescription>
+              Plan: {dashboardData.company.plan} • {dashboardData.company.users} users
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Summary Cards */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {summaryCards.map((card, index) => (
-          <DashboardCard key={index} {...card} />
+          <Card key={index}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {card.title}
+              </CardTitle>
+              {card.icon}
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{card.value}</div>
+              <p className="text-xs text-muted-foreground">
+                {card.description}
+              </p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {/* Low Stock Alerts */}
-      <div className="mt-6">
-        <LowStockAlerts alerts={dashboardData?.lowStockAlerts ?? []} />
-      </div>
-      
-      {/* Recent Activities */}
-      <div className="mt-6">
-        <RecentActivitiesTable activities={dashboardData?.recentActivities ?? []} />
-      </div>
+      {/* Getting Started */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Getting Started</CardTitle>
+          <CardDescription>
+            Quick actions to set up your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Complete your profile</p>
+              <p className="text-sm text-muted-foreground">
+                Add company information and preferences
+              </p>
+            </div>
+            <a
+              href="/settings/company"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 hover:bg-primary/90"
+            >
+              Setup
+            </a>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Invite team members</p>
+              <p className="text-sm text-muted-foreground">
+                Collaborate with your team
+              </p>
+            </div>
+            <a
+              href="/settings/users"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 hover:bg-primary/90"
+            >
+              Invite
+            </a>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Configure integrations</p>
+              <p className="text-sm text-muted-foreground">
+                Connect your favorite tools
+              </p>
+            </div>
+            <a
+              href="/settings/integrations"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 hover:bg-primary/90"
+            >
+              Connect
+            </a>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

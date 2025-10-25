@@ -1,8 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Multi-Tenant SaaS Boilerplate
+
+A production-ready, full-stack multi-tenant SaaS boilerplate built with Next.js 15, TypeScript, PostgreSQL, and Drizzle ORM.
+
+## Features
+
+### Core Multi-Tenancy
+- **Company/Tenant Management** - Complete isolation between tenants
+- **User Management** - Role-based access control (ADMIN, MANAGER, STAFF, VIEWER)
+- **Subscription Management** - Multiple subscription tiers (FREE, BASIC, PRO, ENTERPRISE)
+- **Payment Processing** - Built-in payment tracking and management
+
+### Security & Compliance
+- **JWT Authentication** - Secure token-based authentication
+- **Two-Factor Authentication** - Optional 2FA support
+- **Audit Logs** - Complete activity tracking per tenant
+- **Role-Based Permissions** - Granular permission system
+
+### Developer Experience
+- **Type-Safe** - Full TypeScript support
+- **Database ORM** - Drizzle ORM with PostgreSQL
+- **API Routes** - RESTful API structure
+- **Docker Support** - Containerized development and deployment
+
+### Additional Features
+- **Notifications System** - Multi-channel notifications
+- **API Key Management** - Secure API access
+- **Integrations Framework** - Connect to external services
+- **Email Verification** - User email verification
+- **Dark Mode Ready** - Theme customization support
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: JWT with HTTP-only cookies
+- **UI Components**: shadcn/ui
+- **Icons**: Lucide React
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+
+- npm/yarn/pnpm
+
+### Environment Setup
+
+1. Clone the repository
+2. Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Update the `.env` file with your configuration:
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/saas_db
+
+# JWT Secret
+JWT_SECRET=your-super-secret-jwt-key
+
+# App URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Installation
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+### Database Setup
+
+1. Run migrations:
+
+```bash
+npm run db:migrate
+```
+
+2. (Optional) Seed the database:
+
+```bash
+npm run db:seed
+```
+
+### Development
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -10,63 +102,36 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ## Docker Setup
-
-This application has been containerized for easy deployment and consistent development environments.
 
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
-### Environment Setup
-
-1. Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-2. Update the `.env` file with your specific configuration values.
-
 ### Running with Docker Compose
 
-To start the application and its dependencies:
+Start the application and database:
 
 ```bash
 docker-compose up -d
 ```
 
-This will start both the Next.js application and PostgreSQL database.
+This will start:
+- Next.js application on port 3000
+- PostgreSQL database on port 5432
 
-To stop all containers:
+Stop all containers:
 
 ```bash
 docker-compose down
 ```
 
-### Building for Production
-
-To build and run a production-optimized version:
-
-```bash
-docker-compose -f docker-compose.yml build
-docker-compose -f docker-compose.yml up -d
-```
-
-### Database Migrations
-
-To run database migrations inside the Docker container:
+### Database Migrations in Docker
 
 ```bash
 docker-compose exec app npm run db:migrate
@@ -74,37 +139,179 @@ docker-compose exec app npm run db:migrate
 
 ### Useful Docker Commands
 
-- View running containers:
-  ```bash
-  docker-compose ps
-  ```
+View running containers:
+```bash
+docker-compose ps
+```
 
-- View logs:
-  ```bash
-  docker-compose logs -f app
-  ```
+View logs:
+```bash
+docker-compose logs -f app
+```
 
-- Access the application container shell:
-  ```bash
-  docker-compose exec app sh
-  ```
+Access application container:
+```bash
+docker-compose exec app sh
+```
 
-- Access the PostgreSQL database:
-  ```bash
-  docker-compose exec db psql -U postgres -d factostack
-  ```
+Access PostgreSQL:
+```bash
+docker-compose exec db psql -U postgres -d saas_db
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+├── app/                      # Next.js app directory
+│   ├── api/                 # API routes
+│   │   └── v1/             # API version 1
+│   ├── auth/               # Authentication pages
+│   ├── (protected)/        # Protected routes
+│   └── layout.tsx          # Root layout
+├── components/              # React components
+│   ├── ui/                 # shadcn/ui components
+│   ├── sidebar/            # Navigation components
+│   └── shared/             # Shared components
+├── db/                      # Database
+│   └── schema.ts           # Drizzle schema
+├── lib/                     # Utility functions
+│   ├── auth.ts             # Authentication utilities
+│   ├── types.ts            # TypeScript types
+│   └── utils.ts            # Helper functions
+└── middleware.ts           # Next.js middleware
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database Schema
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The boilerplate includes the following core tables:
 
-## Deploy on Vercel
+- **companies** - Tenant organizations
+- **users** - User accounts with role-based access
+- **subscriptions** - Subscription plans and status
+- **payments** - Payment history
+- **notifications** - User notifications
+- **audit_logs** - Activity tracking
+- **api_keys** - API authentication
+- **integrations** - External service connections
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Routes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Authentication
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/logout` - User logout
+- `GET /api/v1/auth/me` - Get current user
+- `POST /api/v1/auth/refresh-token` - Refresh JWT token
+
+### Users
+- `GET /api/v1/users` - List users (admin only)
+- `GET /api/v1/users/:id` - Get user details
+- `PUT /api/v1/users/:id` - Update user
+- `DELETE /api/v1/users/:id` - Delete user
+
+### Companies
+- `GET /api/v1/companies` - List companies (super admin)
+- `GET /api/v1/companies/:id` - Get company details
+- `PUT /api/v1/companies/:id` - Update company
+
+### Subscriptions
+- `GET /api/v1/subscriptions` - Get company subscription
+- `POST /api/v1/subscriptions` - Create subscription
+- `PUT /api/v1/subscriptions/:id` - Update subscription
+
+### Audit Logs
+- `GET /api/v1/audit-logs` - List audit logs
+- `GET /api/v1/audit-logs/:id` - Get log details
+
+## Customization
+
+### Adding New Features
+
+1. **Database Schema**: Add tables in `db/schema.ts`
+2. **API Routes**: Create routes in `app/api/v1/`
+3. **Pages**: Add pages in `app/(protected)/`
+4. **Components**: Create components in `components/`
+5. **Navigation**: Update sidebar in `components/sidebar/sidebar-config.tsx`
+
+### Subscription Tiers
+
+Modify subscription tiers in `lib/types.ts`:
+
+```typescript
+export enum SubscriptionTierEnum {
+    FREE = "FREE",
+    BASIC = "BASIC",
+    STANDARD = "PRO",
+    PREMIUM = "ENTERPRISE"
+}
+```
+
+### User Roles
+
+Customize roles in `lib/types.ts`:
+
+```typescript
+export enum UserRoleEnum {
+    ADMIN = 'ADMIN',
+    MANAGER = 'MANAGER',
+    STAFF = 'STAFF',
+    VIEWER = 'VIEWER',
+}
+```
+
+## Deployment
+
+### Vercel
+
+The easiest way to deploy is using the [Vercel Platform](https://vercel.com/new):
+
+1. Push your code to GitHub
+2. Import your repository in Vercel
+3. Add environment variables
+4. Deploy
+
+### Docker Production
+
+Build production image:
+
+```bash
+docker build -t saas-boilerplate .
+docker run -p 3000:3000 saas-boilerplate
+```
+
+## Security Best Practices
+
+- Keep `JWT_SECRET` secure and never commit to version control
+- Use HTTPS in production
+- Enable CORS properly for your domain
+- Implement rate limiting on API routes
+- Regular security audits
+- Keep dependencies updated
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - feel free to use this boilerplate for your projects.
+
+## Support
+
+For issues and questions, please open an issue on GitHub.
+
+## Roadmap
+
+- [ ] OAuth integration (Google, GitHub, etc.)
+- [ ] Email service integration
+- [ ] Stripe payment integration
+- [ ] Webhook support
+- [ ] Admin dashboard
+- [ ] Multi-language support
+- [ ] File upload system
+- [ ] Real-time notifications
+- [ ] Team collaboration features
+
+---
+
+Built with ❤️ using Next.js and TypeScript
