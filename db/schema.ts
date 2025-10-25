@@ -62,7 +62,7 @@ export const users = pgTable('users', {
 // Audit Logs
 export const auditLogs = pgTable('audit_logs', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  companyId: text('company_id').notNull(),
+  companyId: text('company_id'),
   userId: text('user_id').notNull(),
   action: auditActionEnum('action').notNull(),
   entityType: text('entity_type').notNull(),
@@ -70,7 +70,7 @@ export const auditLogs = pgTable('audit_logs', {
   changes: json('changes'),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  metadata: json('metadata'),
+  affectedData: json('affected_data'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

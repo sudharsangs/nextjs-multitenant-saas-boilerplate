@@ -7,6 +7,9 @@ import {
   Building,
   Package,
   Key as KeyIcon,
+  CreditCard,
+  Crown,
+  ScrollText
 } from "lucide-react";
 
 
@@ -44,6 +47,27 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
         icon: <Users />,
         roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
         subscriptions: [SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
+      },
+      {
+        title: "Billing",
+        href: "/settings/billing",
+        icon: <CreditCard />,
+        roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
+        subscriptions: [SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
+      },
+      {
+        title: "Subscription",
+        href: "/settings/subscription",
+        icon: <Crown />,
+        roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
+        subscriptions: [SubscriptionTierEnum.FREE, SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
+      },
+      {
+        title: "Audit Logs",
+        href: "/settings/audit-logs",
+        icon: <ScrollText />,
+        roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
+        subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       },
       {
         title: "API Keys",

@@ -36,11 +36,11 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    return NextResponse.json(logs);
+    return NextResponse.json({ success: true, data: logs });
   } catch (err) {
     console.error('Error in GET audit logs:', err);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     );
   }

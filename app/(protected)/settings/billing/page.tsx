@@ -133,9 +133,11 @@ export default function BillingPage() {
         setLoading(true);
 
         // Fetch subscription
-        const subResponse = await api.get("/subscriptions");
-        if (subResponse.success !== false) {
-          setSubscription(subResponse);
+        const subResponse = await api.get<Subscription>("/subscriptions");
+        if (subResponse.success && subResponse.data) {
+          setSubscription(subResponse.data as unknown as Subscription);
+        } else {
+          setSubscription(null);
         }
 
         // Fetch payments
@@ -166,14 +168,16 @@ export default function BillingPage() {
         isAutoRenew: true,
       });
 
-      if (response.success !== false) {
+      if (response.success) {
         setSuccess(`Successfully changed to ${selectedPlan} plan`);
         setIsUpgradeDialogOpen(false);
 
         // Refresh subscription data
-        const subResponse = await api.get("/subscriptions");
-        if (subResponse.success !== false) {
-          setSubscription(subResponse);
+        const subResponse = await api.get<Subscription>("/subscriptions");
+        if (subResponse.success && subResponse.data) {
+          setSubscription(subResponse.data as unknown as Subscription);
+        } else {
+          setSubscription(null);
         }
 
         setTimeout(() => setSuccess(null), 3000);
@@ -195,7 +199,8 @@ export default function BillingPage() {
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status?: string) => {
+    if (!status) return 'bg-gray-50 text-gray-600 ring-gray-500/10';
     switch (status.toUpperCase()) {
       case 'ACTIVE':
         return 'bg-green-50 text-green-700 ring-green-600/20';
@@ -223,6 +228,8 @@ export default function BillingPage() {
       </div>
     );
   }
+
+  const CurrentPlanIcon = subscription ? planFeatures[subscription.plan]?.icon : undefined;
 
   return (
     <div className="space-y-6">
@@ -257,8 +264,8 @@ export default function BillingPage() {
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">
                   <div className={`p-3 rounded-lg bg-primary/10`}>
-                    {planFeatures[subscription.plan]?.icon && (
-                      <planFeatures[subscription.plan].icon className={`h-6 w-6 ${planFeatures[subscription.plan].color}`} />
+                    {CurrentPlanIcon && (
+                      <CurrentPlanIcon className={`h-6 w-6 ${planFeatures[subscription.plan].color}`} />
                     )}
                   </div>
                   <div>
