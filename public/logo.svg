@@ -10,7 +10,7 @@
   <line x1="50" y1="105" x2="150" y2="105" stroke="#ffffff" stroke-width="3" />
   <line x1="50" y1="135" x2="150" y2="135" stroke="#ffffff" stroke-width="3" />
   
-  <!-- Inventory items (boxes) -->
+  <!-- App items (boxes) -->
   <rect x="60" y="50" width="20" height="20" fill="#f1c40f" />
   <rect x="90" y="55" width="25" height="15" fill="#e74c3c" />
   <rect x="125" y="52" width="15" height="18" fill="#2ecc71" />

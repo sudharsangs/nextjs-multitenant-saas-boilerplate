@@ -25,33 +25,38 @@ export default function ProtectedLayout({
             try {
                 // Use our API client for consistency
                 const response = await api.get('/auth/me');
-                
+
                 if (response.success && response.data) {
                     const userData = response.data as {
-                        user: { 
+                        user: {
                             role: string;
-                            companyId?: string; 
-                        };
-                        company?: unknown;
-                        subscription?: { 
-                            plan: string;
+                            companyId?: string;
                         };
                     };
-                    
+
                     // Check if user has a company, if not redirect to onboarding
-                    if (!userData.user.companyId || !userData.company || !userData.subscription) {
+                    if (!userData.user.companyId) {
                         router.push('/onboarding');
                         return;
                     }
-                    
+
+                    // Fetch subscription to get the plan
+                    try {
+                        const subResponse = await api.get('/subscriptions');
+                        if (subResponse.success && subResponse.data) {
+                            const subData = subResponse.data as { plan: string };
+                            setSubscriptionTier(subData.plan as SubscriptionTierEnum);
+                        }
+                    } catch {
+                        // Subscription fetch failed, but user can still use the dashboard
+                    }
+
                     setUserRole(userData.user.role as UserRoleEnum);
-                    setSubscriptionTier(userData.subscription?.plan as SubscriptionTierEnum);
                 } else {
                     // Default to ADMIN if there's an error
                     setUserRole(UserRoleEnum.ADMIN);
                 }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
+            } catch  {
                 // Default to ADMIN if there's an error
                 setUserRole(UserRoleEnum.ADMIN);
             } finally {

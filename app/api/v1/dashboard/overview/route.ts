@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     // Get active users count (users who logged in within last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
     const activeUsers = await db
       .select({ count: sql<number>`count(*)` })
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       .where(sql`
         ${users.companyId} = ${companyId}
         AND ${users.isActive} = true
-        AND ${users.lastLoginAt} >= ${thirtyDaysAgo}
+        AND ${users.lastLoginAt} >= ${thirtyDaysAgoStr}
       `)
       .then(res => Number(res[0]?.count) || 0);
 
@@ -48,8 +49,15 @@ export async function GET(request: NextRequest) {
       subscriptionStatus: subscription?.isActive ? 'active' : 'inactive'
     });
   } catch (error) {
+    // TODO: Replace with proper logging system
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Dashboard overview error:', error);
+    }
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard overview' },
+      {
+        error: 'Failed to fetch dashboard overview',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
+      },
       { status: 500 }
     );
   }

@@ -93,7 +93,7 @@ export const SubscriptionStep = ({
             <span className="text-sm font-normal">/{subscriptionData.duration.replace('-', ' ')}</span>
           </p>
           <ul className="mt-4 space-y-2 text-sm">
-            <li>• Basic inventory management</li>
+            <li>• Basic app features</li>
             <li>• Up to 100 products</li>
             <li>• 1 user</li>
             <li>• Community support</li>
@@ -111,7 +111,7 @@ export const SubscriptionStep = ({
             <span className="text-sm font-normal">/{subscriptionData.duration.replace('-', ' ')}</span>
           </p>
           <ul className="mt-4 space-y-2 text-sm">
-            <li>• Full inventory management</li>
+            <li>• Full app features</li>
             <li>• Up to 1,000 products</li>
             <li>• 3 users</li>
             <li>• Email support</li>
@@ -130,7 +130,7 @@ export const SubscriptionStep = ({
             <span className="text-sm font-normal">/{subscriptionData.duration.replace('-', ' ')}</span>
           </p>
           <ul className="mt-4 space-y-2 text-sm">
-            <li>• Advanced inventory management</li>
+            <li>• Advanced app features</li>
             <li>• Unlimited products</li>
             <li>• Up to 10 users</li>
             <li>• Priority support</li>

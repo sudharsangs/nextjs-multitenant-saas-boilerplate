@@ -5,12 +5,8 @@ import {
   Settings,
   Users,
   Building,
-  CreditCard,
-  Bell,
-  Shield,
-  Key,
-  Plug,
-  FileText
+  Package,
+  Key as KeyIcon,
 } from "lucide-react";
 
 
@@ -20,6 +16,13 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
     href: "/dashboard",
     icon: <LayoutDashboard />,
     roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.STAFF, UserRoleEnum.VIEWER],
+    subscriptions: [SubscriptionTierEnum.FREE, SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
+  },
+  {
+    title: "Products",
+    href: "/products",
+    icon: <Package />,
+    roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.STAFF],
     subscriptions: [SubscriptionTierEnum.FREE, SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
   },
   {
@@ -43,46 +46,11 @@ export const SIDEBAR_ITEMS: SidebarItemType[] = [
         subscriptions: [SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       },
       {
-        title: "Subscription & Billing",
-        href: "/settings/subscription",
-        icon: <CreditCard />,
-        roles: [UserRoleEnum.ADMIN],
-        subscriptions: [SubscriptionTierEnum.FREE, SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
-      },
-      {
-        title: "Notifications",
-        href: "/settings/notifications",
-        icon: <Bell />,
-        roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
-        subscriptions: [SubscriptionTierEnum.FREE, SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
-      },
-      {
         title: "API Keys",
         href: "/settings/api-keys",
-        icon: <Key />,
-        roles: [UserRoleEnum.ADMIN],
-        subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
-      },
-      {
-        title: "Integrations",
-        href: "/settings/integrations",
-        icon: <Plug />,
-        roles: [UserRoleEnum.ADMIN],
-        subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
-      },
-      {
-        title: "Audit Logs",
-        href: "/settings/audit-logs",
-        icon: <FileText />,
-        roles: [UserRoleEnum.ADMIN],
-        subscriptions: [SubscriptionTierEnum.PREMIUM],
-      },
-      {
-        title: "Security",
-        href: "/settings/security",
-        icon: <Shield />,
-        roles: [UserRoleEnum.ADMIN],
-        subscriptions: [SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
+        icon: <KeyIcon />,
+        roles: [UserRoleEnum.ADMIN, UserRoleEnum.MANAGER],
+        subscriptions: [SubscriptionTierEnum.BASIC, SubscriptionTierEnum.STANDARD, SubscriptionTierEnum.PREMIUM],
       },
     ],
     href: "/settings",

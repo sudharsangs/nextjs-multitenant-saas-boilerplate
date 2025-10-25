@@ -13,12 +13,12 @@ export const auditActionEnum = pgEnum('audit_action', ['CREATE', 'UPDATE', 'DELE
 export const integrationTypeEnum = pgEnum('integration_type', ['PAYMENT_GATEWAY', 'EMAIL', 'SMS', 'ERP', 'CRM', 'CUSTOM']);
 export const integrationStatusEnum = pgEnum('integration_status', ['ACTIVE', 'INACTIVE', 'ERROR', 'PENDING']);
 export const subscriptionDurationEnum = pgEnum('subscription_duration', ['monthly', 'quarterly', 'half-yearly', 'annual']);
+export const productCategoryEnum = pgEnum('product_category', ['ELECTRONICS', 'CLOTHING', 'FOOD', 'BOOKS', 'OTHER']);
 
 // Company Management (Tenant)
 export const companies = pgTable('companies', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
-  slug: text('slug').unique().notNull(),
   gstin: text('gstin'),
   address: text('address'),
   city: text('city'),
@@ -30,7 +30,7 @@ export const companies = pgTable('companies', {
   website: text('website'),
   billingAddress: text('billing_address'),
   logo: text('logo'),
-  theme: json('theme'),
+  theme: text('theme'),
   settings: json('settings'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -175,6 +175,21 @@ export const payments = pgTable('payments', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Products (Demo CRUD Table)
+export const products = pgTable('products', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  companyId: text('company_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  category: productCategoryEnum('category').default('OTHER').notNull(),
+  price: decimal('price', { precision: 12, scale: 2 }).notNull(),
+  stock: integer('stock').default(0).notNull(),
+  sku: text('sku').unique(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Relations
 export const companyRelations = relations(companies, ({ one, many }) => ({
   subscription: one(subscriptions, {
@@ -187,6 +202,7 @@ export const companyRelations = relations(companies, ({ one, many }) => ({
   notifications: many(notifications),
   apiKeys: many(apiKeys),
   integrations: many(integrations),
+  products: many(products),
 }));
 
 export const userRelations = relations(users, ({ one, many }) => ({
@@ -258,5 +274,12 @@ export const integrationLogRelations = relations(integrationLogs, ({ one }) => (
   integration: one(integrations, {
     fields: [integrationLogs.integrationId],
     references: [integrations.id],
+  }),
+}));
+
+export const productRelations = relations(products, ({ one }) => ({
+  company: one(companies, {
+    fields: [products.companyId],
+    references: [companies.id],
   }),
 }));

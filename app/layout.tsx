@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Inventory Management System",
-  description: "Manage your inventory efficiently with our comprehensive system by Factostack.",
+  title: "Multi‑Tenant SaaS Boilerplate",
+  description: "Production‑ready multi‑tenant SaaS boilerplate by FactoStack.",
 };
 
 export default function RootLayout({

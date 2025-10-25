@@ -2,7 +2,7 @@ version: '3'
 
 services:
   app:
-    container_name: factostack-inventory
+    container_name: factostack-app
     build:
       context: .
       dockerfile: Dockerfile

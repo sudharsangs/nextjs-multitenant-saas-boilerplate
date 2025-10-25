@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         {!collapsed && (
                             <div className="text-xl font-semibold flex gap-3 text-sidebar-foreground">
                                 <img src="/logo.svg" alt="Logo" className="h-8" />
-                                Inventory
+                                SaaS Boilerplate
                             </div>
                         )}
                         {/* Toggle button for desktop */}

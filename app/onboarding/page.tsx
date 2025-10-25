@@ -114,7 +114,6 @@ export default function OnboardingPage() {
           setFlowType(FlowType.FULL_ONBOARDING);
         }
       } catch (err) {
-        console.error("Error checking user status:", err);
         // If there's an error, default to full onboarding flow
         setFlowType(FlowType.FULL_ONBOARDING);
       } finally {
@@ -293,7 +292,6 @@ export default function OnboardingPage() {
       // Success! Redirect to the dashboard
       router.push("/dashboard");
     } catch (err) {
-      console.error("Onboarding error:", err);
       if (err instanceof Error) {
         setError(err.message);
       } else {

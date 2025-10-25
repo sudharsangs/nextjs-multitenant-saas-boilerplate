@@ -58,7 +58,7 @@ export default function UsersPage() {
                       Staff
                     </span>
                   </td>
-                  <td className="py-2 px-4">Inventory</td>
+                  <td className="py-2 px-4">Operations</td>
                   <td className="py-2 px-4">
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
                       Active
