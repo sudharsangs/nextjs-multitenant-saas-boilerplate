@@ -6,11 +6,7 @@ A production-ready, full-stack multi-tenant SaaS boilerplate built with Next.js 
 
 ![App Screenshot](public/screenshot.png)
 
-## About This Project
-
-This boilerplate is developed and maintained by [FactoStack](https://factostack.com), a product development studio that specializes in rapid digital product launches. FactoStack helps founders and product teams transform ideas into working applications in 4-8 weeks, with a focus on AI-first development and modern best practices.
-
-**Created by**: [Sudharsan GS](https://sudharsangs.in) | **Company**: [FactoStack](https://factostack.com)
+**Created by**: [Sudharsan GS](https://sudharsangs.in) 
 
 ## Features
 
