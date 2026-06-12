@@ -390,7 +390,7 @@ For issues and questions, please open an issue on GitHub.
 
 If you need help building your SaaS application, custom features, or want to accelerate your product development:
 
-- Visit [FactoStack](https://factostack.com) for professional product development services
+- Visit [FactoStack](https://factostack.com) for a Multi-tenant ERP built for manufacturers
 - We specialize in rapid MVP development (4-8 weeks)
 - AI-powered features and automation
 - Full-stack web and mobile applications
